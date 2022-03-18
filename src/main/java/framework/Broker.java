@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-
 public class Broker {
     public static  Logger logger = LogManager.getLogger();
     private String brokerName;
@@ -44,7 +43,7 @@ public class Broker {
         boolean isListening = true;
         while(isListening){
             Connection connection = this.buildNewConnection();
-            //this.updateConnections(connection);
+            this.updateConnections(connection);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
             connectionHandler.start();
         }
@@ -113,21 +112,21 @@ public class Broker {
                         subscribers.add(senderName);
                         subscriberList.put(subscribedTopic, subscribers);
 
-                        ArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-                        if(requiredMsgList == null){
-                            MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
-                            this.connection.send(responseMsg.toByteArray());
-                        } else {
-                            // send Msg one by one
-                            MsgInfo.Msg requiredMsg;
-                            for(int i = startingPosition; i < requiredMsgList.size(); i++){
-                                requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                                logger.info("broker 125, response msg : " + requiredMsg.getContent());
-                                this.connection.send(requiredMsg.toByteArray());
-                            }
-                            MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
-                            this.connection.send(stopMsg.toByteArray());
-                        }
+//                        ArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
+//                        if(requiredMsgList == null){
+//                            MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
+//                            this.connection.send(responseMsg.toByteArray());
+//                        } else {
+//                            // send Msg one by one
+//                            MsgInfo.Msg requiredMsg;
+//                            for(int i = startingPosition; i < requiredMsgList.size(); i++){
+//                                requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
+//                                logger.info("broker 125, response msg : " + requiredMsg.getContent());
+//                                this.connection.send(requiredMsg.toByteArray());
+//                            }
+//                            MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
+//                            this.connection.send(stopMsg.toByteArray());
+//                        }
 
                     } else if(type.equals("publish") && senderName.contains("producer")) {
                         String publishedTopic = receivedMsg.getTopic();
@@ -138,6 +137,15 @@ public class Broker {
                         }
                         messages.add(receivedMsg);
                         msgLists.put(publishedTopic, messages);
+                        ArrayList<String> subscribers = subscriberList.get(publishedTopic);
+                        if(subscribers != null){
+                            for(String subscriber : subscribers){
+                                Connection connection = connections.get(subscriber);
+                                MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
+                                connection.send(requiredMsg.toByteArray());
+
+                            }
+                        }
                     }
 
                 } catch (InvalidProtocolBufferException e) {
@@ -148,46 +156,6 @@ public class Broker {
         }
     }
 
-
-    class Receiver implements Runnable{
-        private Connection connection;
-
-        public Receiver(Connection connection) {
-            this.connection = connection;
-        }
-        @Override
-        public void run() {
-            boolean isReceiving = true;
-            while(isReceiving){
-                byte[] receivedBytes = this.connection.receive();
-                try {
-                    MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
-                    String sender = receivedMsg.getSenderName();
-                    String type = receivedMsg.getType();
-                    if (type.equals("subscribe") && sender.contains("consumer")) {
-                        String subscribedTopic = receivedMsg.getTopic();
-                        ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
-                        if(subscribers == null){
-                            subscribers = new ArrayList<>();
-                        }
-                        subscribers.add(sender);
-                        subscriberList.put(subscribedTopic, subscribers);
-                    } else if(sender.contains("producer")) {
-                        String publishedTopic = receivedMsg.getTopic();
-                        ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
-                        if(messages == null){
-                            messages = new ArrayList<>();
-                        }
-                        messages.add(receivedMsg);
-                        msgLists.put(publishedTopic, messages);
-                    }
-                } catch (InvalidProtocolBufferException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }
-    }
 
 
 }
