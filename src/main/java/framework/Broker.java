@@ -43,26 +43,11 @@ public class Broker {
         boolean isListening = true;
         while(isListening){
             Connection connection = this.buildNewConnection();
-            this.updateConnections(connection);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
             connectionHandler.start();
         }
     }
 
-
-    public void updateConnections(Connection connection){
-        byte[] receivedBytes = connection.receive();
-        MsgInfo.Msg receivedMsg = null;
-        try {
-            receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
-        } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
-        }
-        String sender = receivedMsg.getSenderName();
-        if(!this.connections.contains(sender)){
-            connections.put(sender, connection);
-        }
-    }
 
     /**
      * Listens to new socket connection, return corresponding connection according to value of delay and lossRate
@@ -98,6 +83,8 @@ public class Broker {
                 try {
                     MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                     String senderName = receivedMsg.getSenderName();
+                    //update connections
+                    connections.put(senderName, this.connection);
                     logger.info("broker line 102: senderName + " + senderName);
                     String type = receivedMsg.getType();
                     int startingPosition = receivedMsg.getStartingPosition();
@@ -110,24 +97,8 @@ public class Broker {
                             subscribers = new ArrayList<>();
                         }
                         subscribers.add(senderName);
+                        logger.info("broker line 113: subscriber name + " + senderName);
                         subscriberList.put(subscribedTopic, subscribers);
-
-//                        ArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-//                        if(requiredMsgList == null){
-//                            MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
-//                            this.connection.send(responseMsg.toByteArray());
-//                        } else {
-//                            // send Msg one by one
-//                            MsgInfo.Msg requiredMsg;
-//                            for(int i = startingPosition; i < requiredMsgList.size(); i++){
-//                                requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-//                                logger.info("broker 125, response msg : " + requiredMsg.getContent());
-//                                this.connection.send(requiredMsg.toByteArray());
-//                            }
-//                            MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
-//                            this.connection.send(stopMsg.toByteArray());
-//                        }
-
                     } else if(type.equals("publish") && senderName.contains("producer")) {
                         String publishedTopic = receivedMsg.getTopic();
                         logger.info("broker line 133: publishedTopic + " + publishedTopic);
@@ -140,10 +111,10 @@ public class Broker {
                         ArrayList<String> subscribers = subscriberList.get(publishedTopic);
                         if(subscribers != null){
                             for(String subscriber : subscribers){
+                                logger.info("broker line 144: subscriber " + subscriber);
                                 Connection connection = connections.get(subscriber);
                                 MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
                                 connection.send(requiredMsg.toByteArray());
-
                             }
                         }
                     }

@@ -12,7 +12,6 @@ import static framework.Broker.logger;
 
 public class App {
 
-
     public static void main(String[] args){
         if (args.length != 1){
             System.out.println("Usage of the application is: java App <hostName> ");
@@ -96,9 +95,6 @@ public class App {
         }catch(InterruptedException e){
             System.out.println(e);
         }
-
-
-
     }
 
     public static void saveToFile(Consumer consumer, String file){
@@ -114,12 +110,10 @@ public class App {
                     String line = new String(msg.getContent().toByteArray());
                     logger.info("app line 112 " + line);
                     pw.println(line);
-
                 }
                 // important to flush
                 pw.flush();
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
