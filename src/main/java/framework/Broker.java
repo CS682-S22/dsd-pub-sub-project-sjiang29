@@ -87,40 +87,59 @@ public class Broker {
                     connections.put(senderName, this.connection);
                     logger.info("broker line 102: senderName + " + senderName);
                     String type = receivedMsg.getType();
-                    int startingPosition = receivedMsg.getStartingPosition();
 
                     if(type.equals("subscribe") && senderName.contains("consumer")){
-                        String subscribedTopic = receivedMsg.getTopic();
-                        logger.info("broker line 108: subscribedTopic + " + subscribedTopic);
-                        ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
-                        if(subscribers == null){
-                            subscribers = new ArrayList<>();
-                        }
-                        subscribers.add(senderName);
-                        logger.info("broker line 113: subscriber name + " + senderName);
-                        subscriberList.put(subscribedTopic, subscribers);
+                        dealConsumerReq(receivedMsg, senderName);
                     } else if(type.equals("publish") && senderName.contains("producer")) {
-                        String publishedTopic = receivedMsg.getTopic();
-                        logger.info("broker line 133: publishedTopic + " + publishedTopic);
-                        ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
-                        if(messages == null){
-                            messages = new ArrayList<>();
-                        }
-                        messages.add(receivedMsg);
-                        msgLists.put(publishedTopic, messages);
-                        ArrayList<String> subscribers = subscriberList.get(publishedTopic);
-                        if(subscribers != null){
-                            for(String subscriber : subscribers){
-                                logger.info("broker line 144: subscriber " + subscriber);
-                                Connection connection = connections.get(subscriber);
-                                MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
-                                connection.send(requiredMsg.toByteArray());
-                            }
-                        }
+                        dealProducerReq(receivedMsg, senderName);
                     }
 
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
+                }
+            }
+
+        }
+
+        private void dealConsumerReq(MsgInfo.Msg receivedMsg, String senderName) {
+            String subscribedTopic = receivedMsg.getTopic();
+            int startingPosition = receivedMsg.getStartingPosition();
+            logger.info("broker line 108: subscribedTopic + " + subscribedTopic);
+            ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
+            if(subscribers == null){
+                subscribers = new ArrayList<>();
+            }
+            subscribers.add(senderName);
+            logger.info("broker line 113: subscriber name + " + senderName);
+            subscriberList.put(subscribedTopic, subscribers);
+            ArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
+            if(requiredMsgList != null) {
+                MsgInfo.Msg requiredMsg;
+                for(int i = startingPosition; i < requiredMsgList.size(); i++){
+                    requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
+                    logger.info("broker 125, response msg : " + requiredMsg.getContent());
+                    this.connection.send(requiredMsg.toByteArray());
+                }
+            }
+
+        }
+
+        private void dealProducerReq(MsgInfo.Msg receivedMsg, String senderName) {
+            String publishedTopic = receivedMsg.getTopic();
+            logger.info("broker line 129: publishedTopic + " + publishedTopic);
+            ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
+            if(messages == null){
+                messages = new ArrayList<>();
+            }
+            messages.add(receivedMsg);
+            msgLists.put(publishedTopic, messages);
+            ArrayList<String> subscribers = subscriberList.get(publishedTopic);
+            if(subscribers != null){
+                for(String subscriber : subscribers){
+                    logger.info("broker line 139: subscriber " + subscriber);
+                    Connection connection = connections.get(subscriber);
+                    MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
+                    connection.send(requiredMsg.toByteArray());
                 }
             }
 

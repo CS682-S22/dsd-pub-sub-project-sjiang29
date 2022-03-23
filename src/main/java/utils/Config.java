@@ -18,29 +18,50 @@ public class Config {
     public static HostInfo host4 = new HostInfo("producer3", "localhost",1854);
     // host5, run on "mcvm033.cs.usfca.edu" , port: 1853
     public static HostInfo host5 = new HostInfo("consumer1", "localhost",1855);
-    // host5, run on "mcvm044.cs.usfca.edu" , port: 1854
+    // host6, run on "mcvm044.cs.usfca.edu" , port: 1854
     public static HostInfo host6 = new HostInfo("consumer2", "localhost",1856);
+    //
+    public static HostInfo host7 = new HostInfo("consumer3", "localhost",1857);
 
     // HashMap for looking for a host information using its name
     public static final HashMap<String, HostInfo> hostList = new HashMap<String, HostInfo>()
     {{ put(host1.getHostName(), host1); put(host2.getHostName(), host2); put(host3.getHostName(), host3);
-        put(host4.getHostName(), host4); put(host5.getHostName(), host5); put(host6.getHostName(), host6);}};
+        put(host4.getHostName(), host4); put(host5.getHostName(), host5); put(host6.getHostName(), host6);
+        put(host7.getHostName(), host7);
+    }};
 
     //
-    public static final String file1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
-    public static final String file2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";
-    public static final String file3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/zookeeper1.log";
+    public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
+    public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";
+    public static final String publishedFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/zookeeper1.log";
     public static final HashMap<String, String> producerAndFile = new HashMap<>(){{
-        put(host2.getHostName(), file1); put(host3.getHostName(), file2); put(host4.getHostName(), file3);
+        put(host2.getHostName(), publishedFile1); put(host3.getHostName(), publishedFile2); put(host4.getHostName(), publishedFile3);
     }};
 
     //
     public static final String topic1 = "proxifier";
     public static final String topic2 = "zookeeper";
     public static final HashMap<String, String> topics = new HashMap<>(){{
-        put(file1, topic1); put(file2, topic1); put(file3, topic2);
+        put(publishedFile1, topic1); put(publishedFile2, topic1); put(publishedFile3, topic2);
     }};
+
+    public static final HashMap<String, String> consumerAndTopic = new HashMap<>(){{
+        put(host5.getHostName(), topic1); put(host6.getHostName(), topic1); put(host7.getHostName(), topic2);
+    }};
+
+    public static final String writtenFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer1.txt";
+    public static final String writtenFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer2.txt";
+    public static final String writtenFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer3.txt";
+    public static final HashMap<String, String> consumerAndFile = new HashMap<>(){{
+        put(host5.getHostName(), writtenFile1); put(host6.getHostName(), writtenFile2); put(host7.getHostName(), writtenFile3);
+    }};
+
+    public static final int startingPosition = 0;
+
+
+
 
 
 
 }
+

@@ -39,7 +39,8 @@ public class Consumer implements Runnable{
     }
 
     public void sendRequest(){
-        MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic).setSenderName(this.consumerName).setStartingPosition(this.startingPosition).build();
+        MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic)
+                .setSenderName(this.consumerName).setStartingPosition(this.startingPosition).build();
         this.connection.send(requestMsg.toByteArray());
     }
 
@@ -49,12 +50,8 @@ public class Consumer implements Runnable{
             byte[] receivedBytes = this.connection.receive();
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
-                if(receivedMsg.getType().equals("unavailable")){
-                    this.sendRequest();
-                }else if(receivedMsg.getType().contains("stop")){
-                    isReceiving = false;
-                }else if(receivedMsg.getType().equals("result")) {
-                    logger.info("consumer line 57: received msg " + receivedMsg.getContent());
+                if(receivedMsg.getType().equals("result")) {
+                    logger.info("consumer line 54: received msg " + receivedMsg.getContent());
                     this.subscribedMsgQ.put(receivedMsg);
                 }
             } catch (InvalidProtocolBufferException | InterruptedException e) {
