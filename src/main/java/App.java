@@ -17,32 +17,34 @@ import static framework.Broker.logger;
 public class App {
 
     /**
-     * Usage of app:  java -cp p2.jar App <hostName>
+     * Usage of app:  java -cp p2.jar App <hostName> <startingPosition>
      * HostName could be: "broker", "producer1", "producer2", "producer3", "consumer1", "consumer2", "consumer3"
      *
      */
     public static void main(String[] args){
-        if (args.length != 1){
+        if (args.length != 2){
             System.out.println("Usage of the application is: java App <hostName> ");
             System.exit(1);
         }
 
         String hostName = args[0];
+        int startingPosition = Integer.parseInt(args[1]);
         logger.info("hostName: " + hostName);
-        run(hostName);
+        run(hostName, startingPosition);
     }
 
     /**
      * Helper to run the host based on their name
      * @param hostName
+     * @param startingPosition
      */
-    public static void run(String hostName){
+    public static void run(String hostName, int startingPosition){
         if(hostName.equals("broker")){
             dealBroker(hostName);
         } else if(hostName.contains("producer")){
             dealProducer(hostName);
         } else if(hostName.contains("consumer")){
-            dealConsumer(hostName);
+            dealConsumer(hostName, startingPosition);
         }
     }
 
@@ -94,11 +96,11 @@ public class App {
     /**
      * Helper to deal consumer host
      * @param consumerName
+     * @param startingPosition
      */
-    public static void dealConsumer(String consumerName){
+    public static void dealConsumer(String consumerName, int startingPosition){
         String writtenFile = Config.consumerAndFile.get(consumerName);
         String subscribedTopic = Config.consumerAndTopic.get(consumerName);
-        int startingPosition = Config.startingPosition;
 
         Consumer consumer = new Consumer("broker", consumerName, subscribedTopic, startingPosition);
         Thread t1 = new Thread(consumer);
