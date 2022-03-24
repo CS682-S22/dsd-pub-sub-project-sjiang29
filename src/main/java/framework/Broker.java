@@ -134,7 +134,7 @@ public class Broker {
         private void dealConsumerReq(MsgInfo.Msg receivedMsg, String senderName) {
             String subscribedTopic = receivedMsg.getTopic();
             int startingPosition = receivedMsg.getStartingPosition();
-            logger.info("broker line 129: subscribedTopic + " + subscribedTopic);
+            logger.info("broker line 129: subscribedTopic: " + subscribedTopic);
             ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
             if(subscribers == null){
                 subscribers = new ArrayList<>();
@@ -147,7 +147,7 @@ public class Broker {
                 MsgInfo.Msg requiredMsg;
                 for(int i = startingPosition; i < requiredMsgList.size(); i++){
                     requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                    logger.info("broker 142, response msg : " + requiredMsg.getContent());
+                    logger.info("broker 142, response msg : " + new String(requiredMsg.getContent().toByteArray()));
                     this.connection.send(requiredMsg.toByteArray());
                 }
             }

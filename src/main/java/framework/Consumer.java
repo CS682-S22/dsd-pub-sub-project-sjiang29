@@ -69,7 +69,7 @@ public class Consumer implements Runnable{
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                 if(receivedMsg.getType().equals("result")) {
-                    logger.info("consumer line 72: received msg " + receivedMsg.getContent());
+                    logger.info("consumer line 72: received msg " + new String(receivedMsg.getContent().toByteArray()));
                     this.subscribedMsgQ.put(receivedMsg);
                 }
             } catch (InvalidProtocolBufferException | InterruptedException e) {
