@@ -12,6 +12,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import static framework.Broker.logger;
 
+/**
+ * Consumer class:  runnable consumer to send request to broker and consume message
+ */
 public class Consumer implements Runnable{
     private String brokerName;
     private String consumerName;
@@ -20,6 +23,13 @@ public class Consumer implements Runnable{
     private int startingPosition;
     private BlockingQueue<MsgInfo.Msg> subscribedMsgQ;
 
+    /**
+     * Constructor
+     * @param brokerName
+     * @param consumerName
+     * @param topic
+     * @param startingPosition
+     */
     public Consumer(String brokerName, String consumerName, String topic, int startingPosition) {
         this.brokerName = brokerName;
         this.consumerName = consumerName;
@@ -38,12 +48,20 @@ public class Consumer implements Runnable{
         }
     }
 
+    /**
+     * Method to send request tp broker
+     */
     public void sendRequest(){
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic)
                 .setSenderName(this.consumerName).setStartingPosition(this.startingPosition).build();
         this.connection.send(requestMsg.toByteArray());
     }
 
+    /**
+     * Method to put received msg to blocking queue, and return number of received messages
+     * @return see method description
+     *
+     */
     public void updateBlockingQ(){
         boolean isReceiving = true;
         while(isReceiving){
@@ -51,7 +69,7 @@ public class Consumer implements Runnable{
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                 if(receivedMsg.getType().equals("result")) {
-                    logger.info("consumer line 54: received msg " + receivedMsg.getContent());
+                    logger.info("consumer line 72: received msg " + receivedMsg.getContent());
                     this.subscribedMsgQ.put(receivedMsg);
                 }
             } catch (InvalidProtocolBufferException | InterruptedException e) {
@@ -60,6 +78,12 @@ public class Consumer implements Runnable{
         }
     }
 
+    /**
+     * Method to poll msg out of blocking queue
+     * @param timeOut
+     * @return see method description
+     *
+     */
     public MsgInfo.Msg poll(int timeOut){
         MsgInfo.Msg polledMsg = null;
         try {
@@ -71,12 +95,20 @@ public class Consumer implements Runnable{
 
     }
 
+    /**
+     * Runnable interface method
+     *
+     */
     @Override
     public void run() {
         this.sendRequest();
         this.updateBlockingQ();
     }
 
+    /**
+     * Method to close consumer's connection to broker
+     *
+     */
     public void close(){
         this.connection.close();
     }

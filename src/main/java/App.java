@@ -10,8 +10,17 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import static framework.Broker.logger;
 
+
+/**
+ * App class:  driver to run the application
+ */
 public class App {
 
+    /**
+     * Usage of app:  java -cp p2.jar App <hostName>
+     * HostName could be: "broker", "producer1", "producer2", "producer3", "consumer1", "consumer2", "consumer3"
+     *
+     */
     public static void main(String[] args){
         if (args.length != 1){
             System.out.println("Usage of the application is: java App <hostName> ");
@@ -21,9 +30,12 @@ public class App {
         String hostName = args[0];
         logger.info("hostName: " + hostName);
         run(hostName);
-
     }
 
+    /**
+     * Helper to run the host based on their name
+     * @param hostName
+     */
     public static void run(String hostName){
         if(hostName.equals("broker")){
             dealBroker(hostName);
@@ -34,11 +46,19 @@ public class App {
         }
     }
 
+    /**
+     * Helper to deal broker host
+     * @param brokerName
+     */
     public static void dealBroker(String brokerName){
         Broker broker = new Broker(brokerName);
         broker.startBroker();
     }
 
+    /**
+     * Helper to deal producer host
+     * @param producerName
+     */
     public static void dealProducer(String producerName){
         String file = Config.producerAndFile.get(producerName);
         logger.info("App line 45: file" + file);
@@ -46,6 +66,11 @@ public class App {
         runProducer(producer, file);
     }
 
+    /**
+     * Helper to let a produce read message from a log file and send it to broker
+     * @param producer
+     * @param file
+     */
     public static void runProducer(Producer producer, String file){
         try (FileInputStream fileInputStream = new FileInputStream(file);
              BufferedReader br = new BufferedReader(new InputStreamReader(fileInputStream, StandardCharsets.ISO_8859_1))) {
@@ -64,9 +89,12 @@ public class App {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
+    /**
+     * Helper to deal consumer host
+     * @param consumerName
+     */
     public static void dealConsumer(String consumerName){
         String writtenFile = Config.consumerAndFile.get(consumerName);
         String subscribedTopic = Config.consumerAndTopic.get(consumerName);
@@ -88,6 +116,11 @@ public class App {
         consumer.close();
     }
 
+    /**
+     * Helper to let consumer write its subscribed message to a file
+     * @param consumer
+     * @param file
+     */
     public static void saveToFile(Consumer consumer, String file){
         PrintWriter pw = null;
         try {

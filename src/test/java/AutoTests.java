@@ -1,4 +1,5 @@
 import com.google.protobuf.ByteString;
+import framework.Broker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import proto.MsgInfo;
@@ -39,6 +40,10 @@ public class AutoTests {
         Assertions.assertNotEquals(msg, sentContent);
     }
 
+    /**
+     * Test method writing to a file is correct
+     *
+     */
     @Test
     public void testWriteToFile(){
         String sentFilePath = "sent.txt";
@@ -67,5 +72,54 @@ public class AutoTests {
             }
             Assertions.assertEquals(getCheckSum(sentFilePath), getCheckSum(receivedFilePath));
         }
+    }
+
+    /**
+     * Test broker is set correctly
+     *
+     */
+    @Test
+    public void testBroker1(){
+        Broker broker = new Broker("broker");
+        Assertions.assertEquals(broker.getBrokerPort(), Config.hostList.get("broker").getPort());
+    }
+
+    /**
+     * Test config is set correctly
+     *
+     */
+    @Test
+    public void testConfig1(){
+        Assertions.assertEquals(Config.hostList.size(), 7);
+    }
+
+    @Test
+    public void testConfig2(){
+        Assertions.assertEquals(Config.consumerAndFile.get("consumer1"), Config.writtenFile1);
+    }
+
+    @Test
+    public void testConfig3(){
+        Assertions.assertEquals(Config.consumerAndFile.get("consumer2"), Config.writtenFile2);
+    }
+
+    @Test
+    public void testConfig4(){
+        Assertions.assertEquals(Config.consumerAndFile.get("consumer3"), Config.writtenFile3);
+    }
+
+    @Test
+    public void testConfig5(){
+        Assertions.assertEquals(Config.consumerAndTopic.get("consumer1"), Config.topic1);
+    }
+
+    @Test
+    public void testConfig6(){
+        Assertions.assertEquals(Config.consumerAndTopic.get("consumer2"), Config.topic1);
+    }
+
+    @Test
+    public void testConfig7(){
+        Assertions.assertEquals(Config.consumerAndTopic.get("consumer3"), Config.topic2);
     }
 }
