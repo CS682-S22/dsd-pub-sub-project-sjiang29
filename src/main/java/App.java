@@ -61,7 +61,7 @@ public class App {
      */
     public static void dealProducer(String producerName){
         String file = Config.producerAndFile.get(producerName);
-        logger.info("App line 45: file" + file);
+        logger.info("App line 64: file " + file);
         Producer producer = new Producer("broker", producerName);
         runProducer(producer, file);
     }
@@ -77,7 +77,7 @@ public class App {
             String line;
 
             while ((line = br.readLine()) != null) {
-                logger.info("app 56 published line: " + line);
+                logger.info("app 80 published line: " + line);
                 byte[] data = line.getBytes(StandardCharsets.UTF_8);
                 String topic = Config.topics.get(file);
                 producer.send(topic, data);
