@@ -82,6 +82,7 @@ public class App {
                 logger.info("app 80 published line: " + line);
                 byte[] data = line.getBytes(StandardCharsets.UTF_8);
                 String topic = Config.topics.get(file);
+                Thread.sleep(100);
                 producer.send(topic, data);
             }
             producer.close();
@@ -89,6 +90,8 @@ public class App {
         }catch (FileNotFoundException e) {
             System.out.println("File does not exist!");
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

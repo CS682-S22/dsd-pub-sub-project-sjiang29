@@ -172,6 +172,7 @@ public class Broker {
                     logger.info("broker line 164: subscriber " + subscriber);
                     Connection connection = connections.get(subscriber);
                     MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
+                    logger.info("broker 175, response msg : " + new String(requiredMsg.getContent().toByteArray()));
                     connection.send(requiredMsg.toByteArray());
                 }
             }
