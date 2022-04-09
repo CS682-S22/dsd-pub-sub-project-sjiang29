@@ -53,25 +53,31 @@ public final class MsgInfo {
         getSenderNameBytes();
 
     /**
-     * <code>string type = 5;</code>
+     * <code>int32 senderId = 5;</code>
+     * @return The senderId.
+     */
+    int getSenderId();
+
+    /**
+     * <code>string type = 6;</code>
      * @return The type.
      */
     java.lang.String getType();
     /**
-     * <code>string type = 5;</code>
+     * <code>string type = 6;</code>
      * @return The bytes for type.
      */
     com.google.protobuf.ByteString
         getTypeBytes();
 
     /**
-     * <code>int32 startingPosition = 6;</code>
+     * <code>int32 startingPosition = 7;</code>
      * @return The startingPosition.
      */
     int getStartingPosition();
 
     /**
-     * <code>int32 requiredMsgCount = 7;</code>
+     * <code>int32 requiredMsgCount = 8;</code>
      * @return The requiredMsgCount.
      */
     int getRequiredMsgCount();
@@ -147,18 +153,23 @@ public final class MsgInfo {
               senderName_ = s;
               break;
             }
-            case 42: {
+            case 40: {
+
+              senderId_ = input.readInt32();
+              break;
+            }
+            case 50: {
               java.lang.String s = input.readStringRequireUtf8();
 
               type_ = s;
               break;
             }
-            case 48: {
+            case 56: {
 
               startingPosition_ = input.readInt32();
               break;
             }
-            case 56: {
+            case 64: {
 
               requiredMsgCount_ = input.readInt32();
               break;
@@ -293,10 +304,21 @@ public final class MsgInfo {
       }
     }
 
-    public static final int TYPE_FIELD_NUMBER = 5;
+    public static final int SENDERID_FIELD_NUMBER = 5;
+    private int senderId_;
+    /**
+     * <code>int32 senderId = 5;</code>
+     * @return The senderId.
+     */
+    @java.lang.Override
+    public int getSenderId() {
+      return senderId_;
+    }
+
+    public static final int TYPE_FIELD_NUMBER = 6;
     private volatile java.lang.Object type_;
     /**
-     * <code>string type = 5;</code>
+     * <code>string type = 6;</code>
      * @return The type.
      */
     @java.lang.Override
@@ -313,7 +335,7 @@ public final class MsgInfo {
       }
     }
     /**
-     * <code>string type = 5;</code>
+     * <code>string type = 6;</code>
      * @return The bytes for type.
      */
     @java.lang.Override
@@ -331,10 +353,10 @@ public final class MsgInfo {
       }
     }
 
-    public static final int STARTINGPOSITION_FIELD_NUMBER = 6;
+    public static final int STARTINGPOSITION_FIELD_NUMBER = 7;
     private int startingPosition_;
     /**
-     * <code>int32 startingPosition = 6;</code>
+     * <code>int32 startingPosition = 7;</code>
      * @return The startingPosition.
      */
     @java.lang.Override
@@ -342,10 +364,10 @@ public final class MsgInfo {
       return startingPosition_;
     }
 
-    public static final int REQUIREDMSGCOUNT_FIELD_NUMBER = 7;
+    public static final int REQUIREDMSGCOUNT_FIELD_NUMBER = 8;
     private int requiredMsgCount_;
     /**
-     * <code>int32 requiredMsgCount = 7;</code>
+     * <code>int32 requiredMsgCount = 8;</code>
      * @return The requiredMsgCount.
      */
     @java.lang.Override
@@ -379,14 +401,17 @@ public final class MsgInfo {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(senderName_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, senderName_);
       }
+      if (senderId_ != 0) {
+        output.writeInt32(5, senderId_);
+      }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(type_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, type_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, type_);
       }
       if (startingPosition_ != 0) {
-        output.writeInt32(6, startingPosition_);
+        output.writeInt32(7, startingPosition_);
       }
       if (requiredMsgCount_ != 0) {
-        output.writeInt32(7, requiredMsgCount_);
+        output.writeInt32(8, requiredMsgCount_);
       }
       unknownFields.writeTo(output);
     }
@@ -411,16 +436,20 @@ public final class MsgInfo {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(senderName_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, senderName_);
       }
+      if (senderId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(5, senderId_);
+      }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(type_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, type_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, type_);
       }
       if (startingPosition_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(6, startingPosition_);
+          .computeInt32Size(7, startingPosition_);
       }
       if (requiredMsgCount_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(7, requiredMsgCount_);
+          .computeInt32Size(8, requiredMsgCount_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -445,6 +474,8 @@ public final class MsgInfo {
           .equals(other.getContent())) return false;
       if (!getSenderName()
           .equals(other.getSenderName())) return false;
+      if (getSenderId()
+          != other.getSenderId()) return false;
       if (!getType()
           .equals(other.getType())) return false;
       if (getStartingPosition()
@@ -470,6 +501,8 @@ public final class MsgInfo {
       hash = (53 * hash) + getContent().hashCode();
       hash = (37 * hash) + SENDERNAME_FIELD_NUMBER;
       hash = (53 * hash) + getSenderName().hashCode();
+      hash = (37 * hash) + SENDERID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId();
       hash = (37 * hash) + TYPE_FIELD_NUMBER;
       hash = (53 * hash) + getType().hashCode();
       hash = (37 * hash) + STARTINGPOSITION_FIELD_NUMBER;
@@ -617,6 +650,8 @@ public final class MsgInfo {
 
         senderName_ = "";
 
+        senderId_ = 0;
+
         type_ = "";
 
         startingPosition_ = 0;
@@ -653,6 +688,7 @@ public final class MsgInfo {
         result.topic_ = topic_;
         result.content_ = content_;
         result.senderName_ = senderName_;
+        result.senderId_ = senderId_;
         result.type_ = type_;
         result.startingPosition_ = startingPosition_;
         result.requiredMsgCount_ = requiredMsgCount_;
@@ -717,6 +753,9 @@ public final class MsgInfo {
         if (!other.getSenderName().isEmpty()) {
           senderName_ = other.senderName_;
           onChanged();
+        }
+        if (other.getSenderId() != 0) {
+          setSenderId(other.getSenderId());
         }
         if (!other.getType().isEmpty()) {
           type_ = other.type_;
@@ -974,9 +1013,40 @@ public final class MsgInfo {
         return this;
       }
 
+      private int senderId_ ;
+      /**
+       * <code>int32 senderId = 5;</code>
+       * @return The senderId.
+       */
+      @java.lang.Override
+      public int getSenderId() {
+        return senderId_;
+      }
+      /**
+       * <code>int32 senderId = 5;</code>
+       * @param value The senderId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderId(int value) {
+        
+        senderId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 senderId = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSenderId() {
+        
+        senderId_ = 0;
+        onChanged();
+        return this;
+      }
+
       private java.lang.Object type_ = "";
       /**
-       * <code>string type = 5;</code>
+       * <code>string type = 6;</code>
        * @return The type.
        */
       public java.lang.String getType() {
@@ -992,7 +1062,7 @@ public final class MsgInfo {
         }
       }
       /**
-       * <code>string type = 5;</code>
+       * <code>string type = 6;</code>
        * @return The bytes for type.
        */
       public com.google.protobuf.ByteString
@@ -1009,7 +1079,7 @@ public final class MsgInfo {
         }
       }
       /**
-       * <code>string type = 5;</code>
+       * <code>string type = 6;</code>
        * @param value The type to set.
        * @return This builder for chaining.
        */
@@ -1024,7 +1094,7 @@ public final class MsgInfo {
         return this;
       }
       /**
-       * <code>string type = 5;</code>
+       * <code>string type = 6;</code>
        * @return This builder for chaining.
        */
       public Builder clearType() {
@@ -1034,7 +1104,7 @@ public final class MsgInfo {
         return this;
       }
       /**
-       * <code>string type = 5;</code>
+       * <code>string type = 6;</code>
        * @param value The bytes for type to set.
        * @return This builder for chaining.
        */
@@ -1052,7 +1122,7 @@ public final class MsgInfo {
 
       private int startingPosition_ ;
       /**
-       * <code>int32 startingPosition = 6;</code>
+       * <code>int32 startingPosition = 7;</code>
        * @return The startingPosition.
        */
       @java.lang.Override
@@ -1060,7 +1130,7 @@ public final class MsgInfo {
         return startingPosition_;
       }
       /**
-       * <code>int32 startingPosition = 6;</code>
+       * <code>int32 startingPosition = 7;</code>
        * @param value The startingPosition to set.
        * @return This builder for chaining.
        */
@@ -1071,7 +1141,7 @@ public final class MsgInfo {
         return this;
       }
       /**
-       * <code>int32 startingPosition = 6;</code>
+       * <code>int32 startingPosition = 7;</code>
        * @return This builder for chaining.
        */
       public Builder clearStartingPosition() {
@@ -1083,7 +1153,7 @@ public final class MsgInfo {
 
       private int requiredMsgCount_ ;
       /**
-       * <code>int32 requiredMsgCount = 7;</code>
+       * <code>int32 requiredMsgCount = 8;</code>
        * @return The requiredMsgCount.
        */
       @java.lang.Override
@@ -1091,7 +1161,7 @@ public final class MsgInfo {
         return requiredMsgCount_;
       }
       /**
-       * <code>int32 requiredMsgCount = 7;</code>
+       * <code>int32 requiredMsgCount = 8;</code>
        * @param value The requiredMsgCount to set.
        * @return This builder for chaining.
        */
@@ -1102,7 +1172,7 @@ public final class MsgInfo {
         return this;
       }
       /**
-       * <code>int32 requiredMsgCount = 7;</code>
+       * <code>int32 requiredMsgCount = 8;</code>
        * @return This builder for chaining.
        */
       public Builder clearRequiredMsgCount() {
@@ -1178,11 +1248,11 @@ public final class MsgInfo {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\tmsg.proto\"\207\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
+      "\n\tmsg.proto\"\231\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
       "\030\002 \001(\t\022\017\n\007content\030\003 \001(\014\022\022\n\nsenderName\030\004 " +
-      "\001(\t\022\014\n\004type\030\005 \001(\t\022\030\n\020startingPosition\030\006 " +
-      "\001(\005\022\030\n\020requiredMsgCount\030\007 \001(\005B\tB\007MsgInfo" +
-      "b\006proto3"
+      "\001(\t\022\020\n\010senderId\030\005 \001(\005\022\014\n\004type\030\006 \001(\t\022\030\n\020s" +
+      "tartingPosition\030\007 \001(\005\022\030\n\020requiredMsgCoun" +
+      "t\030\010 \001(\005B\tB\007MsgInfob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1193,7 +1263,7 @@ public final class MsgInfo {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "Type", "StartingPosition", "RequiredMsgCount", });
+        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

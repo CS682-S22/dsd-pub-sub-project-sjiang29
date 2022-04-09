@@ -11,7 +11,8 @@ message Msg {
   string topic = 2;
   bytes content = 3;
   string senderName = 4;
-  string type = 5;
-  int32 startingPosition = 6;
-  int32 requiredMsgCount = 7;
+  int32 senderId = 5;
+  string type = 6;
+  int32 startingPosition = 7;
+  int32 requiredMsgCount = 8;
 }

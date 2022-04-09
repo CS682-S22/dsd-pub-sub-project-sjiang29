@@ -12,6 +12,7 @@ public class Connection implements Receiver, Sender {
 
     private Socket socket;
     private boolean isOpen;
+    private FaultInjector fi;
 
 
     /**
@@ -25,6 +26,17 @@ public class Connection implements Receiver, Sender {
         } else {
             this.isOpen = false;
         }
+        this.fi = null;
+    }
+
+    public Connection(Socket socket, FaultInjector fi) {
+        this.socket = socket;
+        if(this.socket.isConnected()){
+            this.isOpen = true;
+        } else {
+            this.isOpen = false;
+        }
+        this.fi = fi;
     }
 
     /**
@@ -74,6 +86,13 @@ public class Connection implements Receiver, Sender {
     public boolean send(byte[] message) {
         if(this.isOpen()){
             try{
+                if(this.fi != null){
+                    if(this.fi.shouldFail()){
+                        return false;
+                    }else{
+                        this.fi.injectFailure();
+                    }
+                }
                 DataOutputStream outPutStream = new DataOutputStream(this.socket.getOutputStream());
                 outPutStream.writeInt(message.length);
                 outPutStream.write(message);
