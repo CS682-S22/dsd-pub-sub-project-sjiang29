@@ -6,11 +6,12 @@ public class FailureDetector {
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
     private HeartBeatScheduler heartbeatScheduler;
+    private Membership membership;
 
-    public FailureDetector(Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos) {
+    public FailureDetector(Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership) {
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
-        this.heartbeatScheduler = new HeartBeatScheduler(new HeartBeatChecker(heartBeatReceivedTimes, timeoutNanos ), 100);;
+        this.heartbeatScheduler = new HeartBeatScheduler(new HeartBeatChecker(heartBeatReceivedTimes, timeoutNanos, membership ), 100);;
     }
 
     public void start(){

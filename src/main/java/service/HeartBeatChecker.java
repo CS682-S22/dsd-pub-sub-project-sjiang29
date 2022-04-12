@@ -6,10 +6,12 @@ import java.util.Set;
 public class HeartBeatChecker implements Runnable{
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
+    private Membership membership;
 
-    public HeartBeatChecker(Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos ) {
+    public HeartBeatChecker(Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership) {
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
+        this.membership = membership;
     }
 
     @Override
@@ -20,7 +22,7 @@ public class HeartBeatChecker implements Runnable{
             Long lastHeartbeatReceivedTime = this.heartBeatReceivedTimes.get(brokerId);
             Long timeSinceLastHeartbeat = now - lastHeartbeatReceivedTime;
             if (timeSinceLastHeartbeat >= timeoutNanos) {
-                //markDown(serverId);
+                this.membership.markDown(brokerId);
             }
         }
     }

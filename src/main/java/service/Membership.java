@@ -11,10 +11,14 @@ public class Membership {
         this.members = new ConcurrentHashMap<>();
     }
 
-    public void addMember(int id, boolean isAlive){
-        this.members.put(id, isAlive);
+    public void markAlive(int id){
+        this.members.put(id, true);
     }
     public Set<Integer> getAllMembers() {
         return this.members.keySet();
+    }
+
+    public void markDown(int id){
+        this.members.put(id, false);
     }
 }
