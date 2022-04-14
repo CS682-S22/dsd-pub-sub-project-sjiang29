@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Broker {
     public static  Logger logger = LogManager.getLogger();
+    public static volatile boolean isElecting = false;
     private String brokerName;
     private ServerSocket server;
     private int brokerPort;

@@ -30,6 +30,7 @@ public class Config {
         put(host7.getHostName(), host7);
     }};
 
+    //
 
     public static final String publishedFile1 = "proxifier1.log";
     public static final String publishedFile2 = "proxifier2.log";
