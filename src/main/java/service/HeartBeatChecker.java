@@ -58,6 +58,8 @@ public class HeartBeatChecker implements Runnable{
             }
         }
         if(!hasLargerId){
+            //update leaderId
+            this.membership.setLeaderId(hostBrokerId);
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(this.hostBrokerName).build();
             for(int i : liveMembersId){
                 Connection connection = connections.get(i);
