@@ -10,10 +10,10 @@ public class FailureDetector {
     private long timeoutNanos;
     private HeartBeatScheduler heartbeatScheduler;
     private Membership membership;
-    Hashtable<Integer, Connection> connections;
+    Hashtable<String, Connection> connections;
 
     public FailureDetector(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos,
-                           Membership membership, Hashtable<Integer, Connection> connections) {
+                           Membership membership, Hashtable<String, Connection> connections) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;

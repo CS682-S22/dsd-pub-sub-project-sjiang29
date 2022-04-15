@@ -5,12 +5,14 @@ import network.Connection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import proto.MsgInfo;
+import service.Membership;
 import utils.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,6 +27,11 @@ public class Broker {
     private boolean isRunning;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, ArrayList<MsgInfo.Msg>> msgLists;
+    // key is the name of the other end of connection
+    private ConcurrentHashMap<String, Connection> connections;
+
+    private Hashtable<Integer, Long> receivedHeartBeatTime;
+    private Membership membership;
 
     /**
      * Constructor
@@ -111,18 +118,34 @@ public class Broker {
                 try {
                     MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                     String senderName = receivedMsg.getSenderName();
+                    connections.put(senderName, this.connection);
                     logger.info("broker line 111: senderName + " + senderName);
                     String type = receivedMsg.getType();
                     // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
-                    if(type.equals("subscribe") && senderName.contains("consumer")){
+                    if(isConsumerReq(type, senderName)) {
                         dealConsumerReq(receivedMsg);
-                    } else if(type.equals("publish") && senderName.contains("producer")) {
+                    } else if(isProducerReq(type, senderName)) {
                         dealProducerReq(receivedMsg);
+                    } else if(isBrokerReq(type, senderName)) {
+                        dealBrokerReq(receivedMsg);
                     }
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        private boolean isConsumerReq(String type, String senderName){
+            return type.equals("subscribe") && senderName.contains("consumer");
+        }
+
+        private boolean isProducerReq(String type, String senderName){
+            return type.equals("publish") && senderName.contains("producer");
+        }
+
+        private boolean isBrokerReq(String type, String senderName){
+            boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator");
+            return isBrokerReqType && senderName.contains("broker");
         }
 
         /**
@@ -171,6 +194,23 @@ public class Broker {
             }
             messages.add(receivedMsg);
             msgLists.put(publishedTopic, messages);
+        }
+
+        private void dealBrokerReq(MsgInfo.Msg receivedMsg){
+            String type = receivedMsg.getType();
+            String senderName = receivedMsg.getSenderName();
+            if(type.equals("HeartBeat")){
+                long currentTime = System.nanoTime();
+                int id = receivedMsg.getSenderId();
+                receivedHeartBeatTime.put(id, currentTime);
+                membership.markAlive(id);
+            } else if (type.equals("coordinator")){
+                int leaderId = membership.getId(senderName);
+                membership.setLeaderId(leaderId);
+            } else if (type.equals("election")){
+
+            }
+
         }
     }
 

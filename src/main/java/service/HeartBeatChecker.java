@@ -16,10 +16,10 @@ public class HeartBeatChecker implements Runnable{
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
     private Membership membership;
-    private Hashtable<Integer, Connection> connections;
+    private Hashtable<String, Connection> connections;
 
     public HeartBeatChecker(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
-                            Hashtable<Integer, Connection> connections) {
+                            Hashtable<String, Connection> connections) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
@@ -62,7 +62,8 @@ public class HeartBeatChecker implements Runnable{
             this.membership.setLeaderId(hostBrokerId);
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(this.hostBrokerName).build();
             for(int i : liveMembersId){
-                Connection connection = connections.get(i);
+                String recipientBrokerName = this.membership.getName(i);
+                Connection connection = connections.get(recipientBrokerName);
                 connection.send(coordinatorMsg.toByteArray());
             }
 

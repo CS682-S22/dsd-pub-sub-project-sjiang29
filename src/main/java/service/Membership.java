@@ -7,12 +7,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Membership {
     private HashMap<String, Integer> nameToIdMap;
+    private HashMap<Integer, String> idToNameMap;
     private ConcurrentHashMap<Integer, Boolean> members;
     private int leaderId;
 
 
-    public Membership(HashMap<String, Integer> nameToIdMap, ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
+    public Membership(HashMap<String, Integer> nameToIdMap, HashMap<Integer, String> idToNameMap,
+                      ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
         this.nameToIdMap = nameToIdMap;
+        this.idToNameMap = idToNameMap;
         this.members = members;
         this.leaderId = leaderId;
     }
@@ -47,6 +50,10 @@ public class Membership {
 
     public int getId(String name){
         return this.nameToIdMap.get(name);
+    }
+
+    public String getName(int id){
+        return this.idToNameMap.get(id);
     }
 
     public int getMaxLiveId() {
