@@ -5,6 +5,7 @@ import network.Connection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import proto.MsgInfo;
+import service.BullyAlgo;
 import service.Membership;
 import utils.Config;
 
@@ -205,9 +206,13 @@ public class Broker {
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){
-                int leaderId = membership.getId(senderName);
-                membership.setLeaderId(leaderId);
+                int newLeaderId = membership.getId(senderName);
+                membership.setLeaderId(newLeaderId);
             } else if (type.equals("election")){
+                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, connections);
+                if(newLeaderId != -1){
+                    membership.setLeaderId(newLeaderId);
+                }
 
             }
 

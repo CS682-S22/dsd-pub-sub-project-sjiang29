@@ -7,6 +7,8 @@ import proto.MsgInfo;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static framework.Broker.logger;
 import static framework.Broker.isElecting;
 
@@ -16,10 +18,10 @@ public class HeartBeatChecker implements Runnable{
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
     private Membership membership;
-    private Hashtable<String, Connection> connections;
+    private ConcurrentHashMap<String, Connection> connections;
 
     public HeartBeatChecker(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
-                            Hashtable<String, Connection> connections) {
+                            ConcurrentHashMap<String, Connection> connections) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
@@ -39,7 +41,10 @@ public class HeartBeatChecker implements Runnable{
                 this.membership.markDown(id);
                 // leader is down
                 if(id == leaderId){
-                    sendBullyReq();
+                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.connections);
+                    if(newLeaderId != -1){
+                        this.membership.setLeaderId(newLeaderId);
+                    }
                 }
             }
         }

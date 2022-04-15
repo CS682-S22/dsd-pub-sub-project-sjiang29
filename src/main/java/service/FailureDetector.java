@@ -3,6 +3,7 @@ package service;
 import network.Connection;
 
 import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FailureDetector {
     private String hostBrokerName;
@@ -10,10 +11,10 @@ public class FailureDetector {
     private long timeoutNanos;
     private HeartBeatScheduler heartbeatScheduler;
     private Membership membership;
-    Hashtable<String, Connection> connections;
+    private ConcurrentHashMap<String, Connection> connections;
 
     public FailureDetector(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos,
-                           Membership membership, Hashtable<String, Connection> connections) {
+                           Membership membership, ConcurrentHashMap<String, Connection> connections) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
