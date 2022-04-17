@@ -3,6 +3,7 @@ package service;
 import com.google.protobuf.ByteString;
 import network.Connection;
 import proto.MsgInfo;
+import utils.Config;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -53,7 +54,8 @@ public class HeartBeatChecker implements Runnable{
     private void sendBullyReq(){
         boolean hasLargerId = false;
         ArrayList<Integer> liveMembersId = this.membership.getLiveMembers();
-        int hostBrokerId = this.membership.getId(this.hostBrokerName);
+        int hostBrokerId = Config.nameToId.get(this.hostBrokerName);
+
         MsgInfo.Msg electionMsg = MsgInfo.Msg.newBuilder().setType("election").setSenderName(this.hostBrokerName).build();
         for(int i : liveMembersId){
             if(i > hostBrokerId) {
@@ -67,7 +69,7 @@ public class HeartBeatChecker implements Runnable{
             this.membership.setLeaderId(hostBrokerId);
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(this.hostBrokerName).build();
             for(int i : liveMembersId){
-                String recipientBrokerName = this.membership.getName(i);
+                String recipientBrokerName = Config.brokerList.get(i).getHostName();
                 Connection connection = connections.get(recipientBrokerName);
                 connection.send(coordinatorMsg.toByteArray());
             }

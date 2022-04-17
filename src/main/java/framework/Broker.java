@@ -100,8 +100,8 @@ public class Broker {
             HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
             HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 3000);
             hbScheduler.start();
-            HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
-            hbReceiver.run();
+            //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
+            //hbReceiver.run();
         }
 
 
