@@ -15,4 +15,5 @@ message Msg {
   string type = 6;
   int32 startingPosition = 7;
   int32 requiredMsgCount = 8;
+
 }

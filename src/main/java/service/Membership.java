@@ -1,21 +1,24 @@
 package service;
 
+import utils.HostInfo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Membership {
-    private HashMap<String, Integer> nameToIdMap;
-    private HashMap<Integer, String> idToNameMap;
+    //private HashMap<String, Integer> nameToIdMap;
+    //private HashMap<Integer, String> idToNameMap;
     private ConcurrentHashMap<Integer, Boolean> members;
     private int leaderId;
 
 
-    public Membership(HashMap<String, Integer> nameToIdMap, HashMap<Integer, String> idToNameMap,
+    public Membership(
                       ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
-        this.nameToIdMap = nameToIdMap;
-        this.idToNameMap = idToNameMap;
+        //this.nameToIdMap = nameToIdMap;
+        //this.idToNameMap = idToNameMap;
         this.members = members;
         this.leaderId = leaderId;
     }
@@ -48,13 +51,6 @@ public class Membership {
         this.members.put(id, false);
     }
 
-    public int getId(String name){
-        return this.nameToIdMap.get(name);
-    }
-
-    public String getName(int id){
-        return this.idToNameMap.get(id);
-    }
 
     public int getMaxLiveId() {
         int res = Integer.MIN_VALUE;

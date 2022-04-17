@@ -1,19 +1,21 @@
 package framework;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import network.Connection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import proto.MsgInfo;
-import service.BullyAlgo;
-import service.Membership;
+import service.*;
 import utils.Config;
+import utils.HostInfo;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -23,16 +25,19 @@ public class Broker {
     public static  Logger logger = LogManager.getLogger();
     public static volatile boolean isElecting = false;
     private String brokerName;
+    private int brokerId;
     private ServerSocket server;
     private int brokerPort;
-    private boolean isRunning;
+    private volatile boolean isRunning;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, ArrayList<MsgInfo.Msg>> msgLists;
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
+    private ConcurrentHashMap<String, Connection> hbConnections;
 
     private Hashtable<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
+    private volatile int numOfSuccessCopy = 0;
 
     /**
      * Constructor
@@ -40,16 +45,69 @@ public class Broker {
      */
     public Broker(String brokerName) {
         this.brokerName = brokerName;
+        this.brokerId = Config.nameToId.get(this.brokerName);
         this.msgLists = new ConcurrentHashMap<>();
+        this.connections = new ConcurrentHashMap<>();
+        this.hbConnections = new ConcurrentHashMap<>();
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
             //starting broker server
             this.server = new ServerSocket(this.brokerPort);
+            //connectToOtherBrokers();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public void connectToOtherBrokers(){
+        while(true){
+            try{
+
+                for(int id : Config.brokerList.keySet()) {
+                    if (id != this.brokerId) {
+                        HostInfo hostInfo = Config.hostList.get(id);
+                        String connectedBrokerAddress = hostInfo.getHostAddress();
+                        String connectedBrokerName = hostInfo.getHostName();
+                        int connectedBrokerId = hostInfo.getId();
+                        int connectedBrokerPort = hostInfo.getPort();
+                        Socket socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
+                        Connection connection = new Connection(socket);
+                        this.hbConnections.put(connectedBrokerName, connection);
+                        this.membership.markAlive(connectedBrokerId);
+                   }
+                }
+                sendAndReceiveHb();
+                break;
+            }catch (IOException e){
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void sendAndReceiveHb() {
+        Set<Integer> allMembers = this.membership.getAllMembers();
+        for(int brokerMemberId : allMembers){
+            String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
+            Connection connection = this.hbConnections.get(connectedBrokerName);
+
+            HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
+            HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 3000);
+            hbScheduler.start();
+            HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
+            hbReceiver.run();
+        }
+
+
+    }
+
+
 
     /**
      * Getter to get brokerPort(for auto test purpose)
@@ -65,6 +123,9 @@ public class Broker {
     public void startBroker(){
         this.isRunning = true;
         while(this.isRunning){
+            Thread t = new Thread(() -> connectToOtherBrokers());
+            t.start();
+
             Connection connection = this.buildNewConnection();
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
             connectionHandler.start();
@@ -95,6 +156,14 @@ public class Broker {
         return connection;
     }
 
+    public boolean isLeader(){
+        //int currentBrokerId = this.membership.getId(this.brokerName);
+        if(this.brokerId == this.membership.getLeaderId()){
+            return true;
+        } else {
+            return false;
+        }
+    }
     /**
      * Inner ConnectionHandler class:  an inner helper runnable class to deal a specific connection
      */
@@ -128,12 +197,25 @@ public class Broker {
                     } else if(isProducerReq(type, senderName)) {
                         dealProducerReq(receivedMsg);
                     } else if(isBrokerReq(type, senderName)) {
-                        dealBrokerReq(receivedMsg);
+                        dealBrokerReq(receivedMsg, this.connection);
                     }
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+//        private boolean isLeader(){
+//            int currentBrokerId = membership.getId(brokerName);
+//            if(currentBrokerId == membership.getLeaderId()){
+//                return true;
+//            } else {
+//                return false;
+//            }
+//        }
+
+        private void redirectToLeader(){
+
         }
 
         private boolean isConsumerReq(String type, String senderName){
@@ -145,7 +227,8 @@ public class Broker {
         }
 
         private boolean isBrokerReq(String type, String senderName){
-            boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator");
+            boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator")
+                    || type.equals("copy") || type.equals("successfulCopy");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -197,7 +280,7 @@ public class Broker {
             msgLists.put(publishedTopic, messages);
         }
 
-        private void dealBrokerReq(MsgInfo.Msg receivedMsg){
+        private void dealBrokerReq(MsgInfo.Msg receivedMsg, Connection connection){
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
             if(type.equals("HeartBeat")){
@@ -206,13 +289,19 @@ public class Broker {
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){
-                int newLeaderId = membership.getId(senderName);
+                int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
             } else if (type.equals("election")){
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, connections);
                 if(newLeaderId != -1){
                     membership.setLeaderId(newLeaderId);
                 }
+            } else if(type.equals("copy")){
+                dealProducerReq(receivedMsg);
+                MsgInfo.Msg successfulCopyMsg = MsgInfo.Msg.newBuilder().setType("successfulCopy").setSenderName(brokerName).build();
+                connection.send(successfulCopyMsg.toByteArray());
+            } else if(type.equals("successfulCopy")){
+                numOfSuccessCopy++;
 
             }
 
