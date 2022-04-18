@@ -26,6 +26,7 @@ public class LoadBalancer {
         this.newLeaderId = 0;
         this.connections = new ConcurrentHashMap<>();
         try {
+            logger.info("load balancer line 29: load balancer starts");
             this.server = new ServerSocket(this.loadBalancerPort);
         } catch (IOException e) {
             e.printStackTrace();

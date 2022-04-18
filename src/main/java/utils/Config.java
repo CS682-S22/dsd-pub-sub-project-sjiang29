@@ -9,19 +9,19 @@ import java.util.HashMap;
 public class Config {
 
     // host1, run on "mcvm011.cs.usfca.edu" , port: 1851
-    public static HostInfo broker1 = new HostInfo("broker1", "mcvm011.cs.usfca.edu", 1851, 6);
-    public static HostInfo broker2 = new HostInfo("broker2", "mcvm011.cs.usfca.edu", 1852, 7);
-    public static HostInfo broker3 = new HostInfo("broker3", "mcvm011.cs.usfca.edu", 1853, 8);
-    public static HostInfo broker4 = new HostInfo("broker4", "mcvm011.cs.usfca.edu", 1854, 9);
-    public static HostInfo broker5 = new HostInfo("broker5", "mcvm011.cs.usfca.edu", 1855, 10);
+    public static HostInfo broker1 = new HostInfo("broker1", "localhost", 1851, 6);
+    public static HostInfo broker2 = new HostInfo("broker2", "localhost", 1852, 7);
+    public static HostInfo broker3 = new HostInfo("broker3", "localhost", 1853, 8);
+    public static HostInfo broker4 = new HostInfo("broker4", "localhost", 1854, 9);
+    public static HostInfo broker5 = new HostInfo("broker5", "localhost", 1855, 10);
     // host2, run on "mcvm012.cs.usfca.edu" , port: 1852
-    public static HostInfo producer1 = new HostInfo("producer1", "mcvm012.cs.usfca.edu",1856, 0);
-    public static HostInfo producer2 = new HostInfo("producer2", "mcvm012.cs.usfca.edu",1857, 0);
+    public static HostInfo producer1 = new HostInfo("producer1", "localhost",1856, 0);
+    public static HostInfo producer2 = new HostInfo("producer2", "localhost",1857, 0);
 
-    public static HostInfo consumer1 = new HostInfo("consumer1", "mcvm015.cs.usfca.edu",1858, 0);
-    public static HostInfo consumer2 = new HostInfo("consumer2", "mcvm015.cs.usfca.edu",1859, 0);
+    public static HostInfo consumer1 = new HostInfo("consumer1", "localhost",1858, 0);
+    public static HostInfo consumer2 = new HostInfo("consumer2", "localhost",1859, 0);
 
-    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "mcvm015.cs.usfca.edu",1860, 0);
+    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "localhost",1860, 0);
 
 
     // HashMap for looking for a host information using its name
@@ -44,7 +44,7 @@ public class Config {
 
     //
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
-        put("broker1", 6); put("broker2", 7);put("broker1", 8);put("broker1", 9);put("broker1", 10);
+        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9);put("broker5", 10);
     }};
     public static final String publishedFile1 = "proxifier1.log";
     public static final String publishedFile2 = "proxifier2.log";

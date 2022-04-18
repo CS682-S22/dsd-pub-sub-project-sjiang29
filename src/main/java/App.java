@@ -1,5 +1,6 @@
 import framework.Broker;
 import framework.Consumer;
+import framework.LoadBalancer;
 import framework.Producer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,12 +40,14 @@ public class App {
      * @param startingPosition
      */
     public static void run(String hostName, int startingPosition){
-        if(hostName.equals("broker")){
+        if(hostName.contains("broker")){
             dealBroker(hostName);
         } else if(hostName.contains("producer")){
             dealProducer(hostName);
         } else if(hostName.contains("consumer")){
             dealConsumer(hostName, startingPosition);
+        } else if(hostName.contains("loadBalancer")){
+            dealLoadBalancer(hostName);
         }
     }
 
@@ -149,5 +152,10 @@ public class App {
                 pw.close();
             }
         }
+    }
+
+    public static void dealLoadBalancer(String loadBalancer){
+        LoadBalancer lb = new LoadBalancer(loadBalancer);
+        lb.start();
     }
 }

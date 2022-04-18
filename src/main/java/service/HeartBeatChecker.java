@@ -14,7 +14,7 @@ import static framework.Broker.logger;
 
 
 
-public class HeartBeatChecker implements Runnable{
+public class HeartBeatChecker implements Runnable {
     private String hostBrokerName;
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
@@ -41,40 +41,16 @@ public class HeartBeatChecker implements Runnable{
             if (timeSinceLastHeartbeat >= timeoutNanos) {
                 this.membership.markDown(id);
                 // leader is down
-                if(id == leaderId){
+                if (id == leaderId) {
+                    logger.info("hb checker line 45: start bully" );
                     int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.connections);
-                    if(newLeaderId != -1){
+                    if (newLeaderId != -1) {
                         this.membership.setLeaderId(newLeaderId);
                     }
                 }
             }
         }
     }
-
-    private void sendBullyReq(){
-        boolean hasLargerId = false;
-        ArrayList<Integer> liveMembersId = this.membership.getLiveMembers();
-        int hostBrokerId = Config.nameToId.get(this.hostBrokerName);
-
-        MsgInfo.Msg electionMsg = MsgInfo.Msg.newBuilder().setType("election").setSenderName(this.hostBrokerName).build();
-        for(int i : liveMembersId){
-            if(i > hostBrokerId) {
-                hasLargerId = true;
-                Connection connection = connections.get(i);
-                connection.send(electionMsg.toByteArray());
-            }
-        }
-        if(!hasLargerId){
-            //update leaderId
-            this.membership.setLeaderId(hostBrokerId);
-            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(this.hostBrokerName).build();
-            for(int i : liveMembersId){
-                String recipientBrokerName = Config.brokerList.get(i).getHostName();
-                Connection connection = connections.get(recipientBrokerName);
-                connection.send(coordinatorMsg.toByteArray());
-            }
-
-        }
-
-    }
 }
+
+

@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import network.Connection;
 import proto.MsgInfo;
 
+import static framework.Broker.logger;
+
 public class HeartBeatSender implements Runnable{
 
     private Connection connection;
@@ -18,6 +20,7 @@ public class HeartBeatSender implements Runnable{
 
     @Override
     public void run() {
+        logger.info("hb sender line 23: sending hb from " + this.senderId);
         MsgInfo.Msg heartBeatMsg = MsgInfo.Msg.newBuilder().setType("HeartBeat")
                 .setSenderName(this.senderName).setSenderId(this.senderId).build();
         this.connection.send(heartBeatMsg.toByteArray());

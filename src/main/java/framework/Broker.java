@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Broker class:  broker to communicate with either producer or consumer and deal their corresponding request
@@ -56,11 +57,12 @@ public class Broker {
         this.membership = new Membership();
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
-        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 3000, this.membership, this.brokerConnections);
+        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 4000, this.membership, this.brokerConnections);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
             //starting broker server
+            logger.info("broker line 64: broker starts at port: " + this.brokerPort);
             this.server = new ServerSocket(this.brokerPort);
             //connectToOtherBrokers();
 
@@ -75,7 +77,7 @@ public class Broker {
 
                 for(int id : Config.brokerList.keySet()) {
                     if (id != this.brokerId) {
-                        HostInfo hostInfo = Config.hostList.get(id);
+                        HostInfo hostInfo = Config.brokerList.get(id);
                         String connectedBrokerAddress = hostInfo.getHostAddress();
                         String connectedBrokerName = hostInfo.getHostName();
                         int connectedBrokerId = hostInfo.getId();
@@ -86,8 +88,7 @@ public class Broker {
                         this.membership.markAlive(connectedBrokerId);
                    }
                 }
-                sendHb();
-                this.failureDetector.start();
+
                 break;
             }catch (IOException e){
                 try {
@@ -101,14 +102,15 @@ public class Broker {
     }
 
     public void sendHb() {
-        Set<Integer> allMembers = this.membership.getAllMembers();
+        CopyOnWriteArrayList<Integer> allMembers = this.membership.getAllMembers();
         if(this.isElecting == false){
             for(int brokerMemberId : allMembers){
+                logger.info("broker line 107: send hb to: " + brokerMemberId);
                 String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
                 Connection connection = this.brokerConnections.get(connectedBrokerName);
 
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 1000);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
                 hbScheduler.start();
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
@@ -135,8 +137,17 @@ public class Broker {
     public void startBroker(){
         this.isRunning = true;
         while(this.isRunning){
-            Thread t = new Thread(() -> connectToOtherBrokers());
-            t.start();
+            //Thread t = new Thread(() -> connectToOtherBrokers());
+            //t.start();
+            logger.info("broker line 141: connect to other brokers" );
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            connectToOtherBrokers();
+            sendHb();
+            this.failureDetector.start();
             Connection connectionToLoadBalancer = Server.connectToLoadBalancer();
             this.connections.put("loadBalancer", connectionToLoadBalancer);
 
@@ -283,12 +294,16 @@ public class Broker {
                     messages = new ArrayList<>();
                 }
                 messages.add(receivedMsg);
+                dataVersion++;
                 msgLists.put(publishedTopic, messages);
-                sendToFollowers(receivedMsg);
-                if(numOfSuccessCopy == requiredCopyNum){
-                    MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
-                    this.connection.send(ackMsg.toByteArray());
+                if(isLeader()){
+                    sendToFollowers(receivedMsg);
+                    if(numOfSuccessCopy == requiredCopyNum){
+                        MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
+                        this.connection.send(ackMsg.toByteArray());
+                    }
                 }
+
             }
         }
 
@@ -310,6 +325,7 @@ public class Broker {
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
             if(type.equals("HeartBeat")){
+                logger.info("broker line 327: receive hb from + " + senderName);
                 long currentTime = System.nanoTime();
                 int id = receivedMsg.getSenderId();
                 receivedHeartBeatTime.put(id, currentTime);
@@ -318,6 +334,7 @@ public class Broker {
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
             } else if (type.equals("election")){
+                isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, connections);
                 if(newLeaderId != -1){
                     membership.setLeaderId(newLeaderId);

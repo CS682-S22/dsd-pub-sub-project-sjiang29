@@ -7,6 +7,7 @@ import utils.Config;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BullyAlgo {
 
@@ -14,7 +15,7 @@ public class BullyAlgo {
 
         int newLeaderId = -1;
         boolean hasLargerId = false;
-        ArrayList<Integer> liveMembersId = membership.getLiveMembers();
+        CopyOnWriteArrayList<Integer> liveMembersId = membership.getAllMembers();
         int hostBrokerId = Config.nameToId.get(hostBrokerName);
         MsgInfo.Msg electionMsg = MsgInfo.Msg.newBuilder().setType("election").setSenderName(hostBrokerName).build();
         for(int i : liveMembersId){

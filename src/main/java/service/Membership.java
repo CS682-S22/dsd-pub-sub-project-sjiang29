@@ -12,11 +12,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Membership {
     //private HashMap<String, Integer> nameToIdMap;
     //private HashMap<Integer, String> idToNameMap;
-    private ConcurrentHashMap<Integer, Boolean> members;
+    private CopyOnWriteArrayList<Integer> members;
     private int leaderId;
 
 
-    public Membership(ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
+    public Membership(CopyOnWriteArrayList<Integer> members, int leaderId) {
         //this.nameToIdMap = nameToIdMap;
         //this.idToNameMap = idToNameMap;
         this.members = members;
@@ -24,7 +24,7 @@ public class Membership {
     }
 
     public Membership(){
-        this.members = new ConcurrentHashMap<>();
+        this.members = new CopyOnWriteArrayList<>();
         this.leaderId = Config.leaderId;
     }
 
@@ -37,39 +37,38 @@ public class Membership {
     }
 
     public void markAlive(int id){
-        this.members.put(id, true);
+        this.members.add(id);
     }
-    public Set<Integer> getAllMembers() {
-        return this.members.keySet();
+    public CopyOnWriteArrayList<Integer> getAllMembers() {
+        return this.members;
     }
-    public ArrayList<Integer> getLiveMembers() {
-        ArrayList<Integer> liveMembers = new ArrayList<>();
-        for(int i : this.members.keySet()){
-            if(this.members.get(i)){
-                liveMembers.add(i);
-            }
-        }
-        return liveMembers;
+    public CopyOnWriteArrayList<Integer> getLiveMembers() {
+        return this.members;
     }
 
     public void markDown(int id){
-        this.members.put(id, false);
-    }
-
-
-    public int getMaxLiveId() {
-        int res = Integer.MIN_VALUE;
-        for(int i: this.members.keySet()){
-            if(res < i && this.members.get(i)){
-                res = i;
+        for(int i = 0; i < this.members.size(); i++){
+            if(id == this.members.get(i)){
+                this.members.remove(i);
             }
         }
-        return res;
+
     }
+
+
+//    public int getMaxLiveId() {
+//        int res = Integer.MIN_VALUE;
+//        for(int i: this.members.keySet()){
+//            if(res < i && this.members.get(i)){
+//                res = i;
+//            }
+//        }
+//        return res;
+//    }
 
     public ArrayList<Integer> getFollowers(int id){
         ArrayList<Integer> followers = new ArrayList<>();
-        for(int i : this.members.keySet()){
+        for(int i : this.members){
             if(i < id){
                 followers.add(i);
             }
