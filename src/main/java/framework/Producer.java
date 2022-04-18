@@ -1,12 +1,14 @@
 package framework;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import network.Connection;
 import proto.MsgInfo;
 import utils.Config;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
 
 import static framework.Broker.logger;
 
@@ -15,31 +17,58 @@ import static framework.Broker.logger;
  *
  */
 public class Producer {
-    private String brokerName;
+    private String leaderBrokerName;
     private String producerName;
-    private Connection connection;
+    private volatile int hasNewLeader;
+    private Connection leaderBrokerConnection;
+    private Connection loadBalancerConnection;
     private int msgId;
 
     /**
      * Constructor
-     * @param brokerName
+     * @param leaderBrokerName
      * @param producerName
      *
      */
-    public Producer(String brokerName, String producerName) {
+    public Producer(String leaderBrokerName, String producerName) {
         this.msgId = 1;
-        this.brokerName = brokerName;
+        this.leaderBrokerName = leaderBrokerName;
         this.producerName = producerName;
-        String brokerAddress = Config.hostList.get(this.brokerName).getHostAddress();
-        int brokerPort = Config.hostList.get(this.brokerName).getPort();
-        try {
-            Socket socket = new Socket(brokerAddress, brokerPort);
-            this.connection = new Connection(socket);
+        int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
+        String leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
+        int leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
+
+        String loadBalancerAddress = Config.hostList.get("loadBalancer").getHostAddress();
+        int loadBalancerPort = Config.hostList.get("loadBalancer").getPort();
+
+        try {
+            Socket socket1 = new Socket(leaderBrokerAddress, leaderBrokerPort);
+            this.leaderBrokerConnection = new Connection(socket1);
+
+            Socket socket2 = new Socket(leaderBrokerAddress, leaderBrokerPort);
+            this.loadBalancerConnection = new Connection(socket2);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+
     }
+
+    public void updateLeaderBrokerConnection(){
+        byte[] receivedBytes = this.loadBalancerConnection.receive();
+        try {
+            MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+            if(receivedMsg.getType().equals("coordinator")){
+
+            }
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     /**
      * Method to send message of some topic to a broker
@@ -50,7 +79,7 @@ public class Producer {
     public void send(String topic, byte[] data){
         MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
                 .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
-        this.connection.send(sentMsg.toByteArray());
+        this.leaderBrokerConnection.send(sentMsg.toByteArray());
     }
 
     /**
@@ -58,6 +87,6 @@ public class Producer {
      *
      */
     public void close(){
-        this.connection.close();
+        this.brokerConnection.close();
     }
 }

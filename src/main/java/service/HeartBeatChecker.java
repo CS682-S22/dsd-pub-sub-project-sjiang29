@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static framework.Broker.logger;
-import static framework.Broker.isElecting;
+
 
 
 public class HeartBeatChecker implements Runnable{

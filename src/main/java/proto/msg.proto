@@ -16,5 +16,6 @@ message Msg {
   int32 startingPosition = 7;
   int32 requiredMsgCount = 8;
   int32 copyNum = 9;
+  int32 leaderId = 10;
 
 }

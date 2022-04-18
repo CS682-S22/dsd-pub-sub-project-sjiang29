@@ -1,16 +1,21 @@
 package framework;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import network.Connection;
+import proto.MsgInfo;
 import utils.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static framework.Broker.logger;
+
 public class LoadBalancer {
     private String loadBalancerName;
     private int loadBalancerPort;
     private boolean isRunning;
+    private int newLeaderId;
     private ConcurrentHashMap<String, Connection> connections;
     private ServerSocket server;
 
@@ -18,6 +23,7 @@ public class LoadBalancer {
         this.loadBalancerName = loadBalancerName;
         this.loadBalancerPort = Config.hostList.get(loadBalancerName).getPort();
         this.isRunning = true;
+        this.newLeaderId = 0;
         this.connections = new ConcurrentHashMap<>();
         try {
             this.server = new ServerSocket(this.loadBalancerPort);
@@ -49,7 +55,36 @@ public class LoadBalancer {
 
         @Override
         public void run() {
+            while(isRunning){
+                byte[] receivedBytes = this.connection.receive();
+                try {
+                    MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+                    String senderName = receivedMsg.getSenderName();
+                    connections.put(senderName, this.connection);
+                    logger.info("load balancer line 62: senderName + " + senderName);
+                    String type = receivedMsg.getType();
+                    // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
+                    if(isBrokerReq(type, senderName)) {
+                        int newLeaderID
+                        notifyAllHosts();
+                    }
+                } catch (InvalidProtocolBufferException e) {
+                    e.printStackTrace();
+                }
+            }
 
+        }
+
+        private boolean isBrokerReq(String type, String senderName){
+            return type.equals("coordinator") && senderName.contains("broker");
+        }
+
+        private void notifyAllHosts(){
+            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(loadBalancerName).build();
+            for(String receiver :connections.keySet()){
+                Connection connection = connections.get(receiver);
+                connection.send(coordinatorMsg.toByteArray());
+            }
         }
     }
 

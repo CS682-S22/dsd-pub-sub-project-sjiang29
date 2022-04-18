@@ -1,6 +1,7 @@
 package framework;
 
 import network.Connection;
+import utils.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -24,6 +25,21 @@ public class Server {
 
         logger.info("server's line 20: someone is calling");
         Connection connection = new Connection(socket);
+        return connection;
+    }
+
+    public static Connection connectToLoadBalancer(){
+        String loadBalancerName = "loadBalancer";
+        String loadBalancerAddress = Config.hostList.get(loadBalancerName).getHostAddress();
+        int loadBalancerPort = Config.hostList.get(loadBalancerName).getPort();
+        Connection connection = null;
+        try {
+            Socket socket = new Socket(loadBalancerAddress, loadBalancerPort);
+            connection = new Connection(socket);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return connection;
     }
 }

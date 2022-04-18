@@ -87,6 +87,12 @@ public final class MsgInfo {
      * @return The copyNum.
      */
     int getCopyNum();
+
+    /**
+     * <code>int32 leaderId = 10;</code>
+     * @return The leaderId.
+     */
+    int getLeaderId();
   }
   /**
    * Protobuf type {@code Msg}
@@ -183,6 +189,11 @@ public final class MsgInfo {
             case 72: {
 
               copyNum_ = input.readInt32();
+              break;
+            }
+            case 80: {
+
+              leaderId_ = input.readInt32();
               break;
             }
             default: {
@@ -397,6 +408,17 @@ public final class MsgInfo {
       return copyNum_;
     }
 
+    public static final int LEADERID_FIELD_NUMBER = 10;
+    private int leaderId_;
+    /**
+     * <code>int32 leaderId = 10;</code>
+     * @return The leaderId.
+     */
+    @java.lang.Override
+    public int getLeaderId() {
+      return leaderId_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -437,6 +459,9 @@ public final class MsgInfo {
       }
       if (copyNum_ != 0) {
         output.writeInt32(9, copyNum_);
+      }
+      if (leaderId_ != 0) {
+        output.writeInt32(10, leaderId_);
       }
       unknownFields.writeTo(output);
     }
@@ -480,6 +505,10 @@ public final class MsgInfo {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(9, copyNum_);
       }
+      if (leaderId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(10, leaderId_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -513,6 +542,8 @@ public final class MsgInfo {
           != other.getRequiredMsgCount()) return false;
       if (getCopyNum()
           != other.getCopyNum()) return false;
+      if (getLeaderId()
+          != other.getLeaderId()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -542,6 +573,8 @@ public final class MsgInfo {
       hash = (53 * hash) + getRequiredMsgCount();
       hash = (37 * hash) + COPYNUM_FIELD_NUMBER;
       hash = (53 * hash) + getCopyNum();
+      hash = (37 * hash) + LEADERID_FIELD_NUMBER;
+      hash = (53 * hash) + getLeaderId();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -693,6 +726,8 @@ public final class MsgInfo {
 
         copyNum_ = 0;
 
+        leaderId_ = 0;
+
         return this;
       }
 
@@ -728,6 +763,7 @@ public final class MsgInfo {
         result.startingPosition_ = startingPosition_;
         result.requiredMsgCount_ = requiredMsgCount_;
         result.copyNum_ = copyNum_;
+        result.leaderId_ = leaderId_;
         onBuilt();
         return result;
       }
@@ -805,6 +841,9 @@ public final class MsgInfo {
         }
         if (other.getCopyNum() != 0) {
           setCopyNum(other.getCopyNum());
+        }
+        if (other.getLeaderId() != 0) {
+          setLeaderId(other.getLeaderId());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -1251,6 +1290,37 @@ public final class MsgInfo {
         onChanged();
         return this;
       }
+
+      private int leaderId_ ;
+      /**
+       * <code>int32 leaderId = 10;</code>
+       * @return The leaderId.
+       */
+      @java.lang.Override
+      public int getLeaderId() {
+        return leaderId_;
+      }
+      /**
+       * <code>int32 leaderId = 10;</code>
+       * @param value The leaderId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLeaderId(int value) {
+        
+        leaderId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 leaderId = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLeaderId() {
+        
+        leaderId_ = 0;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -1318,12 +1388,12 @@ public final class MsgInfo {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\tmsg.proto\"\252\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
+      "\n\tmsg.proto\"\274\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
       "\030\002 \001(\t\022\017\n\007content\030\003 \001(\014\022\022\n\nsenderName\030\004 " +
       "\001(\t\022\020\n\010senderId\030\005 \001(\005\022\014\n\004type\030\006 \001(\t\022\030\n\020s" +
       "tartingPosition\030\007 \001(\005\022\030\n\020requiredMsgCoun" +
-      "t\030\010 \001(\005\022\017\n\007copyNum\030\t \001(\005B\tB\007MsgInfob\006pro" +
-      "to3"
+      "t\030\010 \001(\005\022\017\n\007copyNum\030\t \001(\005\022\020\n\010leaderId\030\n \001" +
+      "(\005B\tB\007MsgInfob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1334,7 +1404,7 @@ public final class MsgInfo {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", });
+        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", "LeaderId", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

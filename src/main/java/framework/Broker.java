@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Broker {
     public static  Logger logger = LogManager.getLogger();
-    public static volatile boolean isElecting = false;
+    public volatile boolean isElecting;
     private String brokerName;
     private int brokerId;
     private ServerSocket server;
@@ -39,6 +39,7 @@ public class Broker {
 
     private Hashtable<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
+    private FailureDetector failureDetector;
     private volatile int numOfSuccessCopy = 0;
 
     /**
@@ -48,9 +49,11 @@ public class Broker {
     public Broker(String brokerName) {
         this.brokerName = brokerName;
         this.brokerId = Config.nameToId.get(this.brokerName);
+        this.isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
         this.connections = new ConcurrentHashMap<>();
         this.hbConnections = new ConcurrentHashMap<>();
+        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 3000, this.membership, this.hbConnections);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
@@ -80,7 +83,8 @@ public class Broker {
                         this.membership.markAlive(connectedBrokerId);
                    }
                 }
-                sendAndReceiveHb();
+                sendHb();
+                this.failureDetector.start();
                 break;
             }catch (IOException e){
                 try {
@@ -93,18 +97,21 @@ public class Broker {
         }
     }
 
-    public void sendAndReceiveHb() {
+    public void sendHb() {
         Set<Integer> allMembers = this.membership.getAllMembers();
-        for(int brokerMemberId : allMembers){
-            String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
-            Connection connection = this.hbConnections.get(connectedBrokerName);
+        if(this.isElecting == false){
+            for(int brokerMemberId : allMembers){
+                String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
+                Connection connection = this.hbConnections.get(connectedBrokerName);
 
-            HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-            HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 3000);
-            hbScheduler.start();
-            //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
-            //hbReceiver.run();
+                HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 1000);
+                hbScheduler.start();
+                //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
+                //hbReceiver.run();
+            }
         }
+
 
 
     }
@@ -127,6 +134,8 @@ public class Broker {
         while(this.isRunning){
             Thread t = new Thread(() -> connectToOtherBrokers());
             t.start();
+            Connection connectionToLoadBalancer = Server.connectToLoadBalancer();
+            this.connections.put("loadBalancer", connectionToLoadBalancer);
 
             Connection connection = Server.buildNewConnection(this.server);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
