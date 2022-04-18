@@ -13,6 +13,7 @@ import utils.HostInfo;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class Broker {
     private int brokerId;
     private ServerSocket server;
     private int brokerPort;
+    private int requiredCopyNum = 0;
     private volatile boolean isRunning;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, ArrayList<MsgInfo.Msg>> msgLists;
@@ -205,25 +207,13 @@ public class Broker {
             }
         }
 
-//        private boolean isLeader(){
-//            int currentBrokerId = membership.getId(brokerName);
-//            if(currentBrokerId == membership.getLeaderId()){
-//                return true;
-//            } else {
-//                return false;
-//            }
-//        }
-
-        private void redirectToLeader(){
-
-        }
 
         private boolean isConsumerReq(String type, String senderName){
             return type.equals("subscribe") && senderName.contains("consumer");
         }
 
         private boolean isProducerReq(String type, String senderName){
-            return type.equals("publish") && senderName.contains("producer");
+            return (type.equals("publish") || (type.equals("copyNum"))) && senderName.contains("producer");
         }
 
         private boolean isBrokerReq(String type, String senderName){
@@ -270,14 +260,38 @@ public class Broker {
          * @param receivedMsg
          */
         private void dealProducerReq(MsgInfo.Msg receivedMsg){
-            String publishedTopic = receivedMsg.getTopic();
-            logger.info("broker line 157: publishedTopic + " + publishedTopic);
-            ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
-            if(messages == null){
-                messages = new ArrayList<>();
+            String type = receivedMsg.getType();
+            if(type.equals("copyNum")){
+                requiredCopyNum = receivedMsg.getCopyNum();
+            } else if(type.equals("publish")){
+                String publishedTopic = receivedMsg.getTopic();
+                logger.info("broker line 157: publishedTopic + " + publishedTopic);
+                ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
+                if(messages == null){
+                    messages = new ArrayList<>();
+                }
+                messages.add(receivedMsg);
+                msgLists.put(publishedTopic, messages);
+                sendToFollowers(receivedMsg);
+                if(numOfSuccessCopy == requiredCopyNum){
+                    MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
+                    this.connection.send(ackMsg.toByteArray());
+                }
             }
-            messages.add(receivedMsg);
-            msgLists.put(publishedTopic, messages);
+        }
+
+        private void sendToFollowers(MsgInfo.Msg receivedMsg){
+
+            String topic = receivedMsg.getTopic();
+            String msgContent = new String(receivedMsg.getContent().toByteArray());
+            MsgInfo.Msg copiedMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("copy")
+                    .setContent(ByteString.copyFrom(msgContent.getBytes(StandardCharsets.UTF_8))).setSenderName(brokerName).build();
+            ArrayList<Integer> followers = membership.getFollowers(brokerId);
+            for(int follower: followers){
+                Connection connection = connections.get(Config.brokerList.get(follower));
+                connection.send(copiedMsg.toByteArray());
+            }
+
         }
 
         private void dealBrokerReq(MsgInfo.Msg receivedMsg, Connection connection){

@@ -61,4 +61,14 @@ public class Membership {
         }
         return res;
     }
+
+    public ArrayList<Integer> getFollowers(int id){
+        ArrayList<Integer> followers = new ArrayList<>();
+        for(int i : this.members.keySet()){
+            if(i < id){
+                followers.add(i);
+            }
+        }
+        return followers;
+    }
 }
