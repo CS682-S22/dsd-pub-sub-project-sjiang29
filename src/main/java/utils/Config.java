@@ -21,12 +21,15 @@ public class Config {
     public static HostInfo consumer1 = new HostInfo("consumer1", "mcvm015.cs.usfca.edu",1858, 0);
     public static HostInfo consumer2 = new HostInfo("consumer2", "mcvm015.cs.usfca.edu",1859, 0);
 
+    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "mcvm015.cs.usfca.edu",1860, 0);
+
 
     // HashMap for looking for a host information using its name
     public static final HashMap<String, HostInfo> hostList = new HashMap<String, HostInfo>()
     {{ put(broker1.getHostName(), broker1); put(broker2.getHostName(), broker2); put(broker3.getHostName(), broker3);
         put(broker4.getHostName(), broker4); put(broker5.getHostName(), broker5); put(producer1.getHostName(), producer1);
         put(producer2.getHostName(), producer2); put(consumer1.getHostName(), consumer1); put(consumer2.getHostName(), consumer2);
+        put(loadBalancer.getHostName(), loadBalancer);
     }};
 
     //

@@ -128,7 +128,7 @@ public class Broker {
             Thread t = new Thread(() -> connectToOtherBrokers());
             t.start();
 
-            Connection connection = this.buildNewConnection();
+            Connection connection = Server.buildNewConnection(this.server);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
             connectionHandler.start();
         }

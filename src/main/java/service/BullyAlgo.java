@@ -2,6 +2,7 @@ package service;
 
 import network.Connection;
 import proto.MsgInfo;
+import utils.Config;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -14,12 +15,12 @@ public class BullyAlgo {
         int newLeaderId = -1;
         boolean hasLargerId = false;
         ArrayList<Integer> liveMembersId = membership.getLiveMembers();
-        int hostBrokerId = membership.getId(hostBrokerName);
+        int hostBrokerId = Config.nameToId.get(hostBrokerName);
         MsgInfo.Msg electionMsg = MsgInfo.Msg.newBuilder().setType("election").setSenderName(hostBrokerName).build();
         for(int i : liveMembersId){
             if(i > hostBrokerId) {
                 hasLargerId = true;
-                String recipientBrokerName = membership.getName(i);
+                String recipientBrokerName = Config.hostList.get(i).getHostName();
                 Connection connection = connections.get(recipientBrokerName);
                 connection.send(electionMsg.toByteArray());
             }
@@ -29,7 +30,7 @@ public class BullyAlgo {
             newLeaderId = hostBrokerId;
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(hostBrokerName).build();
             for(int i : liveMembersId){
-                String recipientBrokerName = membership.getName(i);
+                String recipientBrokerName = Config.hostList.get(i).getHostName();
                 Connection connection = connections.get(recipientBrokerName);
                 connection.send(coordinatorMsg.toByteArray());
             }
