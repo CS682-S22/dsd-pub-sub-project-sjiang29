@@ -38,6 +38,7 @@ public class Broker {
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
     private ConcurrentHashMap<String, Connection> brokerConnections;
+    private Connection connectionToLoadBalancer;
 
     private Hashtable<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
@@ -57,7 +58,10 @@ public class Broker {
         this.membership = new Membership();
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
-        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 4000, this.membership, this.brokerConnections);
+        this.connectionToLoadBalancer = Server.connectToLoadBalancer();
+        this.connections.put("loadBalancer", connectionToLoadBalancer);
+        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 4000,
+                this.membership, this.brokerConnections, this.connectionToLoadBalancer);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
@@ -148,8 +152,7 @@ public class Broker {
             connectToOtherBrokers();
             sendHb();
             this.failureDetector.start();
-            Connection connectionToLoadBalancer = Server.connectToLoadBalancer();
-            this.connections.put("loadBalancer", connectionToLoadBalancer);
+
 
             Connection connection = Server.buildNewConnection(this.server);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
@@ -335,7 +338,7 @@ public class Broker {
                 membership.setLeaderId(newLeaderId);
             } else if (type.equals("election")){
                 isElecting = true;
-                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, connections);
+                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);
                 if(newLeaderId != -1){
                     membership.setLeaderId(newLeaderId);
                 }

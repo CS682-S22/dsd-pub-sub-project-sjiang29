@@ -11,7 +11,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BullyAlgo {
 
-    public static int sendBullyReq(Membership membership, String hostBrokerName, ConcurrentHashMap<String, Connection> connections){
+    public static int sendBullyReq(Membership membership, String hostBrokerName,
+                                   ConcurrentHashMap<String, Connection> connections, Connection connectionToLoadBalancer){
 
         int newLeaderId = -1;
         boolean hasLargerId = false;
@@ -29,12 +30,13 @@ public class BullyAlgo {
         if(!hasLargerId){
             //currentBroker will be new leader if there is no other higher broker id
             newLeaderId = hostBrokerId;
-            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(hostBrokerName).build();
+            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setLeaderId(newLeaderId).setSenderName(hostBrokerName).build();
             for(int i : liveMembersId){
                 String recipientBrokerName = Config.hostList.get(i).getHostName();
                 Connection connection = connections.get(recipientBrokerName);
                 connection.send(coordinatorMsg.toByteArray());
             }
+            connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
 
         }
         return newLeaderId;

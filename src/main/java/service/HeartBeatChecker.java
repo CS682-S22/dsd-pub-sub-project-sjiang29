@@ -20,14 +20,17 @@ public class HeartBeatChecker implements Runnable {
     private long timeoutNanos;
     private Membership membership;
     private ConcurrentHashMap<String, Connection> connections;
+    private Connection connectionToLoadBalancer;
+
 
     public HeartBeatChecker(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
-                            ConcurrentHashMap<String, Connection> connections) {
+                            ConcurrentHashMap<String, Connection> connections, Connection connectionToLoadBalancer) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
         this.membership = membership;
         this.connections = connections;
+        this.connectionToLoadBalancer = connectionToLoadBalancer;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class HeartBeatChecker implements Runnable {
                 // leader is down
                 if (id == leaderId) {
                     logger.info("hb checker line 45: start bully" );
-                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.connections);
+                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.connections, this.connectionToLoadBalancer);
                     if (newLeaderId != -1) {
                         this.membership.setLeaderId(newLeaderId);
                     }
