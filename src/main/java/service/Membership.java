@@ -1,5 +1,6 @@
 package service;
 
+import utils.Config;
 import utils.HostInfo;
 
 import java.util.ArrayList;
@@ -15,12 +16,16 @@ public class Membership {
     private int leaderId;
 
 
-    public Membership(
-                      ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
+    public Membership(ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
         //this.nameToIdMap = nameToIdMap;
         //this.idToNameMap = idToNameMap;
         this.members = members;
         this.leaderId = leaderId;
+    }
+
+    public Membership(){
+        this.members = new ConcurrentHashMap<>();
+        this.leaderId = Config.leaderId;
     }
 
     synchronized public int getLeaderId() {

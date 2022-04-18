@@ -65,7 +65,8 @@ public class LoadBalancer {
                     String type = receivedMsg.getType();
                     // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
                     if(isBrokerReq(type, senderName)) {
-                        int newLeaderID
+                        newLeaderId = receivedMsg.getLeaderId();
+
                         notifyAllHosts();
                     }
                 } catch (InvalidProtocolBufferException e) {
@@ -80,7 +81,8 @@ public class LoadBalancer {
         }
 
         private void notifyAllHosts(){
-            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(loadBalancerName).build();
+            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(loadBalancerName).
+                    setLeaderId(newLeaderId).build();
             for(String receiver :connections.keySet()){
                 Connection connection = connections.get(receiver);
                 connection.send(coordinatorMsg.toByteArray());

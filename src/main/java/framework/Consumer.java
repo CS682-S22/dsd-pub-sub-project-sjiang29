@@ -19,7 +19,8 @@ import static framework.Broker.logger;
 public class Consumer implements Runnable{
     private String brokerName;
     private String consumerName;
-    private Connection connection;
+    private Connection leaderBrokerConnection;
+    private Connection loadBalancerConnection;
     private String topic;
     private int startingPosition;
     private BlockingQueue<MsgInfo.Msg> subscribedMsgQ;
@@ -39,24 +40,48 @@ public class Consumer implements Runnable{
 
         String brokerAddress = Config.hostList.get(this.brokerName).getHostAddress();
         int brokerPort = Config.hostList.get(this.brokerName).getPort();
+
+        String loadBalancerAddress = Config.hostList.get("loadBalancer").getHostAddress();
+        int loadBalancerPort = Config.hostList.get("loadBalancer").getPort();
         try {
-            Socket socket = new Socket(brokerAddress, brokerPort);
-            this.connection = new Connection(socket);
+            Socket socket1 = new Socket(brokerAddress, brokerPort);
+            this.leaderBrokerConnection = new Connection(socket1);
+
+            Socket socket2 = new Socket(loadBalancerAddress, loadBalancerPort);
+            this.loadBalancerConnection = new Connection(socket2);
             this.subscribedMsgQ = new LinkedBlockingQueue<>();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void updateLeaderBrokerConnection(){
+        byte[] receivedBytes = this.loadBalancerConnection.receive();
+        try {
+            MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+            if(receivedMsg.getType().equals("coordinator")){
+                int newLeaderId = receivedMsg.getLeaderId();
+                this.brokerName = Config.brokerList.get(newLeaderId).getHostName();
+                String leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
+                int leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
+                Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                this.leaderBrokerConnection = new Connection(socket);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * Method to send request tp broker
      * @param startingPoint
      */
     public void sendRequest(int startingPoint){
+        Thread t = new Thread(() -> updateLeaderBrokerConnection());
+        t.start();
         int requiredMsgCount = 20;
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic).setSenderName(this.consumerName)
                 .setStartingPosition(startingPoint).setRequiredMsgCount(requiredMsgCount).build();
-        this.connection.send(requestMsg.toByteArray());
+        this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
     /**
@@ -68,7 +93,7 @@ public class Consumer implements Runnable{
         int receivedMsgCount = 0;
         boolean isReceiving = true;
         while(isReceiving){
-            byte[] receivedBytes = this.connection.receive();
+            byte[] receivedBytes = this.leaderBrokerConnection.receive();
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                 if(receivedMsg.getType().equals("unavailable")){
@@ -110,7 +135,7 @@ public class Consumer implements Runnable{
     @Override
     public void run() {
         int startingPoint = this.startingPosition;
-        while(this.connection.isOpen() && startingPoint >= 0){
+        while(this.leaderBrokerConnection.isOpen() && startingPoint >= 0){
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
@@ -128,6 +153,6 @@ public class Consumer implements Runnable{
      *
      */
     public void close(){
-        this.connection.close();
+        this.leaderBrokerConnection.close();
     }
 }

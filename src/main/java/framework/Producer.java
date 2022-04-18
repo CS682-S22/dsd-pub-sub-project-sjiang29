@@ -8,6 +8,7 @@ import utils.Config;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
 import static framework.Broker.logger;
@@ -46,7 +47,7 @@ public class Producer {
             Socket socket1 = new Socket(leaderBrokerAddress, leaderBrokerPort);
             this.leaderBrokerConnection = new Connection(socket1);
 
-            Socket socket2 = new Socket(leaderBrokerAddress, leaderBrokerPort);
+            Socket socket2 = new Socket(loadBalancerAddress, loadBalancerPort);
             this.loadBalancerConnection = new Connection(socket2);
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,9 +62,14 @@ public class Producer {
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
             if(receivedMsg.getType().equals("coordinator")){
-
+                int newLeaderId = receivedMsg.getLeaderId();
+                this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
+                String leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
+                int leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
+                Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                this.leaderBrokerConnection = new Connection(socket);
             }
-        } catch (InvalidProtocolBufferException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -77,6 +83,8 @@ public class Producer {
      *
      */
     public void send(String topic, byte[] data){
+        Thread t = new Thread(() -> updateLeaderBrokerConnection());
+        t.start();
         MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
                 .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
         this.leaderBrokerConnection.send(sentMsg.toByteArray());
@@ -86,7 +94,5 @@ public class Producer {
      * Method to close the connection to a broker
      *
      */
-    public void close(){
-        this.brokerConnection.close();
-    }
+
 }

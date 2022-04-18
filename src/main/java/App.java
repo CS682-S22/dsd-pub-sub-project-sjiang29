@@ -85,7 +85,7 @@ public class App {
                 Thread.sleep(100);
                 producer.send(topic, data);
             }
-            producer.close();
+            //producer.close();
         }catch (FileNotFoundException e) {
             System.out.println("File does not exist!");
         } catch (IOException e) {

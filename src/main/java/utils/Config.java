@@ -38,6 +38,8 @@ public class Config {
         put(broker4.getId(), broker4); put(broker5.getId(), broker5);
     }};
 
+    public static final int leaderId = 10;
+
 
 
     //
