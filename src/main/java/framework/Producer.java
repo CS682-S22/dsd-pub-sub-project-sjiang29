@@ -27,13 +27,12 @@ public class Producer {
 
     /**
      * Constructor
-     * @param leaderBrokerName
      * @param producerName
      *
      */
-    public Producer(String leaderBrokerName, String producerName) {
+    public Producer(String producerName) {
         this.msgId = 1;
-        this.leaderBrokerName = leaderBrokerName;
+        this.leaderBrokerName = "broker5";
         this.producerName = producerName;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
@@ -53,8 +52,11 @@ public class Producer {
             e.printStackTrace();
         }
 
+    }
 
-
+    public void sendCopyNum(int copyNum){
+        MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("copyNum").setCopyNum(copyNum).setSenderName(this.producerName).build();
+        this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
     public void updateLeaderBrokerConnection(){
@@ -88,6 +90,22 @@ public class Producer {
         MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
                 .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
         this.leaderBrokerConnection.send(sentMsg.toByteArray());
+    }
+
+    public boolean sendSuccessfully(){
+        Thread t = new Thread(() -> updateLeaderBrokerConnection());
+        t.start();
+        byte[] receivedBytes = this.leaderBrokerConnection.receive();
+        try {
+            MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+            String type = receivedMsg.getType();
+            if(type.equals("acknowledge")){
+                return true;
+            }
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

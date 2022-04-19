@@ -42,8 +42,9 @@ public class Broker {
 
     private Hashtable<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
-    private FailureDetector failureDetector;
+    private HeartBeatScheduler failureDetector;
     private volatile int numOfSuccessCopy = 0;
+
 
     /**
      * Constructor
@@ -60,8 +61,9 @@ public class Broker {
         this.brokerConnections = new ConcurrentHashMap<>();
         this.connectionToLoadBalancer = Server.connectToLoadBalancer();
         this.connections.put("loadBalancer", connectionToLoadBalancer);
-        this.failureDetector = new FailureDetector(this.brokerName, this.receivedHeartBeatTime, 4000,
-                this.membership, this.brokerConnections, this.connectionToLoadBalancer);
+
+        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,4000000000L,
+                this.membership, this.brokerConnections, this.connectionToLoadBalancer), 4000);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
@@ -106,7 +108,8 @@ public class Broker {
     }
 
     public void sendHb() {
-        CopyOnWriteArrayList<Integer> allMembers = this.membership.getAllMembers();
+        Set<Integer> allMembers = this.membership.getAllMembers();
+        logger.info("broker line 112 isElecting: " + this.isElecting);
         if(this.isElecting == false){
             for(int brokerMemberId : allMembers){
                 logger.info("broker line 107: send hb to: " + brokerMemberId);
@@ -114,7 +117,7 @@ public class Broker {
                 Connection connection = this.brokerConnections.get(connectedBrokerName);
 
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 4000);
                 hbScheduler.start();
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
@@ -140,19 +143,19 @@ public class Broker {
      */
     public void startBroker(){
         this.isRunning = true;
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        connectToOtherBrokers();
+        sendHb();
+        this.failureDetector.start();
+
         while(this.isRunning){
             //Thread t = new Thread(() -> connectToOtherBrokers());
             //t.start();
             logger.info("broker line 141: connect to other brokers" );
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            connectToOtherBrokers();
-            sendHb();
-            this.failureDetector.start();
-
 
             Connection connection = Server.buildNewConnection(this.server);
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
@@ -301,7 +304,7 @@ public class Broker {
                 msgLists.put(publishedTopic, messages);
                 if(isLeader()){
                     sendToFollowers(receivedMsg);
-                    if(numOfSuccessCopy == requiredCopyNum){
+                    if((numOfSuccessCopy == requiredCopyNum) || (numOfSuccessCopy == membership.getAllMembers().size())){
                         MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
                         this.connection.send(ackMsg.toByteArray());
                     }
@@ -331,6 +334,7 @@ public class Broker {
                 logger.info("broker line 327: receive hb from + " + senderName);
                 long currentTime = System.nanoTime();
                 int id = receivedMsg.getSenderId();
+                logger.info("broker line 336: mark time + " + id + currentTime);
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){

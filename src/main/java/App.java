@@ -30,8 +30,9 @@ public class App {
 
         String hostName = args[0];
         int startingPosition = Integer.parseInt(args[1]);
+        int copyNum = Integer.parseInt(args[1]);
         logger.info("hostName: " + hostName);
-        run(hostName, startingPosition);
+        run(hostName, startingPosition, copyNum);
     }
 
     /**
@@ -39,11 +40,11 @@ public class App {
      * @param hostName
      * @param startingPosition
      */
-    public static void run(String hostName, int startingPosition){
+    public static void run(String hostName, int startingPosition, int copyNum){
         if(hostName.contains("broker")){
             dealBroker(hostName);
         } else if(hostName.contains("producer")){
-            dealProducer(hostName);
+            dealProducer(hostName, copyNum);
         } else if(hostName.contains("consumer")){
             dealConsumer(hostName, startingPosition);
         } else if(hostName.contains("loadBalancer")){
@@ -64,11 +65,11 @@ public class App {
      * Helper to deal producer host
      * @param producerName
      */
-    public static void dealProducer(String producerName){
+    public static void dealProducer(String producerName, int copyNum){
         String file = Config.producerAndFile.get(producerName);
         logger.info("App line 64: file" + file);
-        Producer producer = new Producer("broker", producerName);
-        runProducer(producer, file);
+        Producer producer = new Producer(producerName);
+        runProducer(producer, file, copyNum);
     }
 
     /**
@@ -76,17 +77,24 @@ public class App {
      * @param producer
      * @param file
      */
-    public static void runProducer(Producer producer, String file){
+    public static void runProducer(Producer producer, String file, int copyNum){
+        producer.sendCopyNum(copyNum);
         String topic = Config.topics.get(file);
         logger.info("app 76 published topic: " + topic);
+        boolean sendSuccessfully;
         try (FileInputStream fileInputStream = new FileInputStream(file);
              BufferedReader br = new BufferedReader(new InputStreamReader(fileInputStream, StandardCharsets.ISO_8859_1))) {
             String line;
             while ((line = br.readLine()) != null) {
                 logger.info("app 81 published line: " + line);
                 byte[] data = line.getBytes(StandardCharsets.UTF_8);
-                Thread.sleep(100);
+                Thread.sleep(500);
                 producer.send(topic, data);
+                sendSuccessfully = producer.sendSuccessfully();
+                while(!sendSuccessfully){
+                    producer.send(topic, data);
+                    sendSuccessfully = producer.sendSuccessfully();
+                }
             }
             //producer.close();
         }catch (FileNotFoundException e) {
@@ -108,7 +116,7 @@ public class App {
         String writtenFile = Config.consumerAndFile.get(consumerName);
         String subscribedTopic = Config.consumerAndTopic.get(consumerName);
 
-        Consumer consumer = new Consumer("broker", consumerName, subscribedTopic, startingPosition);
+        Consumer consumer = new Consumer(consumerName, subscribedTopic, startingPosition);
         Thread t1 = new Thread(consumer);
         t1.start();
         Thread t2 = new Thread(() -> saveToFile(consumer, writtenFile));

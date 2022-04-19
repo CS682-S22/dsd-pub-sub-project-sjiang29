@@ -19,17 +19,17 @@ public class HeartBeatChecker implements Runnable {
     private Hashtable<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
     private Membership membership;
-    private ConcurrentHashMap<String, Connection> connections;
+    private ConcurrentHashMap<String, Connection> brokerConnections;
     private Connection connectionToLoadBalancer;
 
 
     public HeartBeatChecker(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
-                            ConcurrentHashMap<String, Connection> connections, Connection connectionToLoadBalancer) {
+                            ConcurrentHashMap<String, Connection> brokerConnections, Connection connectionToLoadBalancer) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
         this.membership = membership;
-        this.connections = connections;
+        this.brokerConnections = brokerConnections;
         this.connectionToLoadBalancer = connectionToLoadBalancer;
     }
 
@@ -37,16 +37,19 @@ public class HeartBeatChecker implements Runnable {
     public void run() {
         Long now = System.nanoTime();
         Set<Integer> brokerIds = this.heartBeatReceivedTimes.keySet();
+
         int leaderId = this.membership.getLeaderId();
+        logger.info("hb checker line 40:leaderId " + leaderId);
         for (Integer id : brokerIds) {
             Long lastHeartbeatReceivedTime = this.heartBeatReceivedTimes.get(id);
             Long timeSinceLastHeartbeat = now - lastHeartbeatReceivedTime;
             if (timeSinceLastHeartbeat >= timeoutNanos) {
+                logger.info("hb checker line 45: mark down: " + id);
                 this.membership.markDown(id);
                 // leader is down
                 if (id == leaderId) {
-                    logger.info("hb checker line 45: start bully" );
-                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.connections, this.connectionToLoadBalancer);
+                    logger.info("hb checker line 49: start bully" );
+                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections, this.connectionToLoadBalancer);
                     if (newLeaderId != -1) {
                         this.membership.setLeaderId(newLeaderId);
                     }

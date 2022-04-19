@@ -12,11 +12,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Membership {
     //private HashMap<String, Integer> nameToIdMap;
     //private HashMap<Integer, String> idToNameMap;
-    private CopyOnWriteArrayList<Integer> members;
-    private int leaderId;
+    private ConcurrentHashMap<Integer, Boolean> members;
+    private volatile int leaderId;
 
 
-    public Membership(CopyOnWriteArrayList<Integer> members, int leaderId) {
+    public Membership(ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
         //this.nameToIdMap = nameToIdMap;
         //this.idToNameMap = idToNameMap;
         this.members = members;
@@ -24,7 +24,7 @@ public class Membership {
     }
 
     public Membership(){
-        this.members = new CopyOnWriteArrayList<>();
+        this.members = new ConcurrentHashMap<Integer, Boolean>();
         this.leaderId = Config.leaderId;
     }
 
@@ -37,21 +37,17 @@ public class Membership {
     }
 
     public void markAlive(int id){
-        this.members.add(id);
+        this.members.put(id, true);
     }
-    public CopyOnWriteArrayList<Integer> getAllMembers() {
-        return this.members;
-    }
-    public CopyOnWriteArrayList<Integer> getLiveMembers() {
-        return this.members;
+    public Set<Integer> getAllMembers() {
+
+
+        return this.members.keySet();
     }
 
+
     public void markDown(int id){
-        for(int i = 0; i < this.members.size(); i++){
-            if(id == this.members.get(i)){
-                this.members.remove(i);
-            }
-        }
+        this.members.remove(id);
 
     }
 
@@ -68,7 +64,7 @@ public class Membership {
 
     public ArrayList<Integer> getFollowers(int id){
         ArrayList<Integer> followers = new ArrayList<>();
-        for(int i : this.members){
+        for(int i : this.members.keySet()){
             if(i < id){
                 followers.add(i);
             }

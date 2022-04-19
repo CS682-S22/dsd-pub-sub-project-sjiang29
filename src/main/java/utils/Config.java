@@ -44,11 +44,11 @@ public class Config {
 
     //
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
-        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9);put("broker5", 10);
+        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
     }};
-    public static final String publishedFile1 = "proxifier1.log";
-    public static final String publishedFile2 = "proxifier2.log";
-    public static final String publishedFile3 = "zookeeper1.log";
+    public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
+    public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";
+    public static final String publishedFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/zookeeper1.log";
     // Hashmap to map producer with its published file
     public static final HashMap<String, String> producerAndFile = new HashMap<>(){{
         put(producer1.getHostName(), publishedFile1); put(producer2.getHostName(), publishedFile3);
@@ -66,9 +66,9 @@ public class Config {
         put(consumer1.getHostName(), topic1); put(consumer2.getHostName(), topic2);
     }};
 
-    public static final String writtenFile1 = "consumer1.txt";
-    public static final String writtenFile2 = "consumer2.txt";
-    public static final String writtenFile3 = "consumer3.txt";
+    public static final String writtenFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer1.txt";
+    public static final String writtenFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer2.txt";
+    public static final String writtenFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer3.txt";
     // HashMap to map consumer with its written file
     public static final HashMap<String, String> consumerAndFile = new HashMap<>(){{
         put(consumer1.getHostName(), writtenFile1); put(consumer2.getHostName(), writtenFile2);

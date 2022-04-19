@@ -84,9 +84,13 @@ public class LoadBalancer {
         private void notifyAllHosts(){
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(loadBalancerName).
                     setLeaderId(newLeaderId).build();
-            for(String receiver :connections.keySet()){
-                Connection connection = connections.get(receiver);
-                connection.send(coordinatorMsg.toByteArray());
+            for(String receiver : connections.keySet()){
+                if(receiver.contains("producer") || receiver.contains("consumer")){
+                    logger.info("load balancer line 89: send coordinator msg to + " + receiver);
+                    Connection connection = connections.get(receiver);
+                    connection.send(coordinatorMsg.toByteArray());
+                }
+
             }
         }
     }

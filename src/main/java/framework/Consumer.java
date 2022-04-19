@@ -17,7 +17,7 @@ import static framework.Broker.logger;
  * Consumer class:  runnable consumer to send request to broker and consume message
  */
 public class Consumer implements Runnable{
-    private String brokerName;
+    private String leaderBrokerName;
     private String consumerName;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
@@ -27,19 +27,19 @@ public class Consumer implements Runnable{
 
     /**
      * Constructor
-     * @param brokerName
+
      * @param consumerName
      * @param topic
      * @param startingPosition
      */
-    public Consumer(String brokerName, String consumerName, String topic, int startingPosition) {
-        this.brokerName = brokerName;
+    public Consumer(String consumerName, String topic, int startingPosition) {
+        this.leaderBrokerName = "broker5";
         this.consumerName = consumerName;
         this.topic = topic;
         this.startingPosition = startingPosition;
 
-        String brokerAddress = Config.hostList.get(this.brokerName).getHostAddress();
-        int brokerPort = Config.hostList.get(this.brokerName).getPort();
+        String brokerAddress = Config.hostList.get(this.leaderBrokerName).getHostAddress();
+        int brokerPort = Config.hostList.get(this.leaderBrokerName).getPort();
 
         String loadBalancerAddress = Config.hostList.get("loadBalancer").getHostAddress();
         int loadBalancerPort = Config.hostList.get("loadBalancer").getPort();
@@ -61,7 +61,7 @@ public class Consumer implements Runnable{
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
             if(receivedMsg.getType().equals("coordinator")){
                 int newLeaderId = receivedMsg.getLeaderId();
-                this.brokerName = Config.brokerList.get(newLeaderId).getHostName();
+                this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 String leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
                 int leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
                 Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
