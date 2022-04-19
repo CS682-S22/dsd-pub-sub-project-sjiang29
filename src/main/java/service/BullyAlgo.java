@@ -15,7 +15,7 @@ import static framework.Broker.logger;
 public class BullyAlgo {
 
     public static int sendBullyReq(Membership membership, String hostBrokerName,
-                                   ConcurrentHashMap<String, Connection> connections, Connection connectionToLoadBalancer){
+                                   ConcurrentHashMap<String, Connection> brokerConnections, Connection connectionToLoadBalancer){
 
         int newLeaderId = -1;
         boolean hasLargerId = false;
@@ -26,7 +26,7 @@ public class BullyAlgo {
             if(i > hostBrokerId) {
                 hasLargerId = true;
                 String recipientBrokerName = Config.brokerList.get(i).getHostName();
-                Connection connection = connections.get(recipientBrokerName);
+                Connection connection = brokerConnections.get(recipientBrokerName);
                 connection.send(electionMsg.toByteArray());
             }
         }
@@ -37,13 +37,18 @@ public class BullyAlgo {
             for(int i : liveMembersId){
                 String recipientBrokerName = Config.brokerList.get(i).getHostName();
                 logger.info("bully algo line 39: send coordinator msg to + " + recipientBrokerName);
-                Connection connection = connections.get(recipientBrokerName);
-                connection.send(coordinatorMsg.toByteArray());
+                Connection connection = brokerConnections.get(recipientBrokerName);
+                Thread t = new Thread(() -> sendCoordinatorMsg(connection, coordinatorMsg));
+                t.start();
             }
             connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
 
         }
         return newLeaderId;
 
+    }
+
+    public static void sendCoordinatorMsg(Connection conn, MsgInfo.Msg coordinatorMsg){
+        conn.send(coordinatorMsg.toByteArray());
     }
 }

@@ -59,7 +59,7 @@ public class Broker {
         this.membership = new Membership();
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
-        this.connectionToLoadBalancer = Server.connectToLoadBalancer();
+        this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
         this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,5000000000L,
@@ -313,7 +313,7 @@ public class Broker {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if((numOfSuccessCopy == requiredCopyNum) || (numOfSuccessCopy == membership.getAllMembers().size())){
+                    if((numOfSuccessCopy >= requiredCopyNum) || (numOfSuccessCopy == membership.getAllMembers().size())){
                         MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
                         this.connection.send(ackMsg.toByteArray());
                          numOfSuccessCopy = 0;

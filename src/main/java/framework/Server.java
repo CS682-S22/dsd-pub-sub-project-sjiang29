@@ -1,6 +1,7 @@
 package framework;
 
 import network.Connection;
+import proto.MsgInfo;
 import utils.Config;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class Server {
         return connection;
     }
 
-    public static Connection connectToLoadBalancer(){
+    public static Connection connectToLoadBalancer(String senderName){
         String loadBalancerName = "loadBalancer";
         String loadBalancerAddress = Config.hostList.get(loadBalancerName).getHostAddress();
         int loadBalancerPort = Config.hostList.get(loadBalancerName).getPort();
@@ -36,6 +37,8 @@ public class Server {
         try {
             Socket socket = new Socket(loadBalancerAddress, loadBalancerPort);
             connection = new Connection(socket);
+            MsgInfo.Msg greetingMsg = MsgInfo.Msg.newBuilder().setType("greeting").setSenderName(senderName).build();
+            connection.send(greetingMsg.toByteArray());
 
         } catch (IOException e) {
             e.printStackTrace();

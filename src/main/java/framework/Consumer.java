@@ -41,15 +41,13 @@ public class Consumer implements Runnable{
         String brokerAddress = Config.hostList.get(this.leaderBrokerName).getHostAddress();
         int brokerPort = Config.hostList.get(this.leaderBrokerName).getPort();
 
-        String loadBalancerAddress = Config.hostList.get("loadBalancer").getHostAddress();
-        int loadBalancerPort = Config.hostList.get("loadBalancer").getPort();
+        this.loadBalancerConnection = Server.connectToLoadBalancer(this.consumerName);
+        this.subscribedMsgQ = new LinkedBlockingQueue<>();
         try {
-            Socket socket1 = new Socket(brokerAddress, brokerPort);
-            this.leaderBrokerConnection = new Connection(socket1);
+            Socket socket = new Socket(brokerAddress, brokerPort);
+            this.leaderBrokerConnection = new Connection(socket);
 
-            Socket socket2 = new Socket(loadBalancerAddress, loadBalancerPort);
-            this.loadBalancerConnection = new Connection(socket2);
-            this.subscribedMsgQ = new LinkedBlockingQueue<>();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

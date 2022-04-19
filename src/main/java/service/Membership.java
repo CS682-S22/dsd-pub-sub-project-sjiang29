@@ -69,7 +69,7 @@ public class Membership {
     public ArrayList<Integer> getFollowers(int id){
         ArrayList<Integer> followers = new ArrayList<>();
         for(int i : this.members.keySet()){
-            if(i < id){
+            if(i < id && this.members.get(i)){
                 followers.add(i);
             }
         }

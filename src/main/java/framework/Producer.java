@@ -20,11 +20,11 @@ import static framework.Broker.logger;
 public class Producer {
     private String leaderBrokerName;
     private String producerName;
-    private volatile int hasNewLeader;
+    private volatile boolean isUpdatingLeader;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
     private int msgId;
-    private volatile boolean isWaitingResponse;
+
 
     /**
      * Constructor
@@ -35,21 +35,18 @@ public class Producer {
         this.msgId = 1;
         this.leaderBrokerName = "broker5";
         this.producerName = producerName;
-        this.isWaitingResponse = false;
+        this.isUpdatingLeader = false;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
         String leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
         int leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
 
-        String loadBalancerAddress = Config.hostList.get("loadBalancer").getHostAddress();
-        int loadBalancerPort = Config.hostList.get("loadBalancer").getPort();
+        this.loadBalancerConnection = Server.connectToLoadBalancer(this.producerName);
 
         try {
-            Socket socket1 = new Socket(leaderBrokerAddress, leaderBrokerPort);
-            this.leaderBrokerConnection = new Connection(socket1);
+            Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+            this.leaderBrokerConnection = new Connection(socket);
 
-            Socket socket2 = new Socket(loadBalancerAddress, loadBalancerPort);
-            this.loadBalancerConnection = new Connection(socket2);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -65,13 +62,19 @@ public class Producer {
         byte[] receivedBytes = this.loadBalancerConnection.receive();
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+
             if(receivedMsg.getType().equals("coordinator")){
+
+                this.isUpdatingLeader = true;
+
                 int newLeaderId = receivedMsg.getLeaderId();
+                logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 String leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
                 int leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
                 Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
                 this.leaderBrokerConnection = new Connection(socket);
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -87,20 +90,25 @@ public class Producer {
      *
      */
     public synchronized void send(String topic, byte[] data){
-        Thread t = new Thread(() -> updateLeaderBrokerConnection());
-        t.start();
+       try{
+           MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
+                   .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
+           this.leaderBrokerConnection.send(sentMsg.toByteArray());
+           logger.info("producer line 94 published line ");
+       } catch (IOException  e){
 
-            MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
-                    .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
-            this.leaderBrokerConnection.send(sentMsg.toByteArray());
-            logger.info("producer line 94 published line ");
+       }
+
+
+
+
+
 
 
     }
 
     public synchronized boolean sendSuccessfully(){
-        Thread t = new Thread(() -> updateLeaderBrokerConnection());
-        t.start();
+
 
         byte[] receivedBytes = this.leaderBrokerConnection.receive();
         try {
@@ -111,6 +119,8 @@ public class Producer {
             }
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
+            updateLeaderBrokerConnection();
+            sendSuccessfully();
         }
         return false;
     }
