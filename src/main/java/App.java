@@ -90,11 +90,14 @@ public class App {
                 byte[] data = line.getBytes(StandardCharsets.UTF_8);
                 Thread.sleep(500);
                 producer.send(topic, data);
+
                 sendSuccessfully = producer.sendSuccessfully();
+                logger.info("app 95 published successfully line: " + sendSuccessfully);
                 while(!sendSuccessfully){
                     producer.send(topic, data);
                     sendSuccessfully = producer.sendSuccessfully();
                 }
+
             }
             //producer.close();
         }catch (FileNotFoundException e) {

@@ -24,6 +24,7 @@ public class Producer {
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
     private int msgId;
+    private volatile boolean isWaitingResponse;
 
     /**
      * Constructor
@@ -34,6 +35,7 @@ public class Producer {
         this.msgId = 1;
         this.leaderBrokerName = "broker5";
         this.producerName = producerName;
+        this.isWaitingResponse = false;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
         String leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
@@ -84,17 +86,22 @@ public class Producer {
      * @param data
      *
      */
-    public void send(String topic, byte[] data){
+    public synchronized void send(String topic, byte[] data){
         Thread t = new Thread(() -> updateLeaderBrokerConnection());
         t.start();
-        MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
-                .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
-        this.leaderBrokerConnection.send(sentMsg.toByteArray());
+
+            MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
+                    .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
+            this.leaderBrokerConnection.send(sentMsg.toByteArray());
+            logger.info("producer line 94 published line ");
+
+
     }
 
-    public boolean sendSuccessfully(){
+    public synchronized boolean sendSuccessfully(){
         Thread t = new Thread(() -> updateLeaderBrokerConnection());
         t.start();
+
         byte[] receivedBytes = this.leaderBrokerConnection.receive();
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
@@ -107,6 +114,8 @@ public class Producer {
         }
         return false;
     }
+
+
 
     /**
      * Method to close the connection to a broker

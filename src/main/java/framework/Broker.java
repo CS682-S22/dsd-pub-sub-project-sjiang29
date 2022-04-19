@@ -62,8 +62,8 @@ public class Broker {
         this.connectionToLoadBalancer = Server.connectToLoadBalancer();
         this.connections.put("loadBalancer", connectionToLoadBalancer);
 
-        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,4000000000L,
-                this.membership, this.brokerConnections, this.connectionToLoadBalancer), 4000);
+        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,5000000000L,
+                this.membership, this.brokerConnections, this.connectionToLoadBalancer), 8000);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
@@ -117,7 +117,7 @@ public class Broker {
                 Connection connection = this.brokerConnections.get(connectedBrokerName);
 
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 4000);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 5000);
                 hbScheduler.start();
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
@@ -158,6 +158,7 @@ public class Broker {
             logger.info("broker line 141: connect to other brokers" );
 
             Connection connection = Server.buildNewConnection(this.server);
+
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
             connectionHandler.start();
         }
@@ -220,8 +221,9 @@ public class Broker {
                     MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                     String senderName = receivedMsg.getSenderName();
                     connections.put(senderName, this.connection);
-                    logger.info("broker line 111: senderName + " + senderName);
                     String type = receivedMsg.getType();
+                    logger.info("broker line 223: senderName + " + senderName + "**type: " + type);
+
                     // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
                     if(isConsumerReq(type, senderName)) {
                         dealConsumerReq(receivedMsg);
@@ -292,9 +294,10 @@ public class Broker {
             String type = receivedMsg.getType();
             if(type.equals("copyNum")){
                 requiredCopyNum = receivedMsg.getCopyNum();
+                logger.info("broker line 295: copyNum + " + requiredCopyNum);
             } else if(type.equals("publish")){
                 String publishedTopic = receivedMsg.getTopic();
-                logger.info("broker line 157: publishedTopic + " + publishedTopic);
+                logger.info("broker line 298: publishedTopic + " + publishedTopic);
                 ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
                 if(messages == null){
                     messages = new ArrayList<>();
@@ -302,17 +305,27 @@ public class Broker {
                 messages.add(receivedMsg);
                 dataVersion++;
                 msgLists.put(publishedTopic, messages);
+                logger.info("broker line 306: is leader? + " + isLeader());
                 if(isLeader()){
                     sendToFollowers(receivedMsg);
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if((numOfSuccessCopy == requiredCopyNum) || (numOfSuccessCopy == membership.getAllMembers().size())){
                         MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
                         this.connection.send(ackMsg.toByteArray());
+                         numOfSuccessCopy = 0;
                     }
                 }
 
             }
         }
 
+        private void sendToFollower(MsgInfo.Msg msg, Connection connection){
+            connection.send(msg.toByteArray());
+        }
         private void sendToFollowers(MsgInfo.Msg receivedMsg){
 
             String topic = receivedMsg.getTopic();
@@ -321,8 +334,22 @@ public class Broker {
                     .setContent(ByteString.copyFrom(msgContent.getBytes(StandardCharsets.UTF_8))).setSenderName(brokerName).build();
             ArrayList<Integer> followers = membership.getFollowers(brokerId);
             for(int follower: followers){
-                Connection connection = connections.get(Config.brokerList.get(follower));
-                connection.send(copiedMsg.toByteArray());
+                Connection connection = brokerConnections.get(Config.brokerList.get(follower).getHostName());
+                logger.info("broker line 327: send to follower");
+                Thread t = new Thread(() -> sendToFollower(copiedMsg, connection));
+                t.start();
+//                byte[] receivedBytes = this.connection.receive();
+//                try {
+//                    MsgInfo.Msg replyMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+//                    if(replyMsg.getType().equals("successfulCopy")){
+//                        logger.info("broker line 332: receive successful from + " + replyMsg.getSenderName());
+//                        numOfSuccessCopy++;
+//                    }
+//                } catch (InvalidProtocolBufferException e) {
+//                    e.printStackTrace();
+//                }
+
+
             }
 
         }
@@ -331,10 +358,10 @@ public class Broker {
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
             if(type.equals("HeartBeat")){
-                logger.info("broker line 327: receive hb from + " + senderName);
+                //logger.info("broker line 327: receive hb from + " + senderName);
                 long currentTime = System.nanoTime();
                 int id = receivedMsg.getSenderId();
-                logger.info("broker line 336: mark time + " + id + currentTime);
+                //logger.info("broker line 336: mark time + " + id + currentTime);
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){
@@ -347,15 +374,32 @@ public class Broker {
                     membership.setLeaderId(newLeaderId);
                 }
             } else if(type.equals("copy")){
-                dealProducerReq(receivedMsg);
+                logger.info("broker line 65: receive copy from + " + senderName);
+                dealCopy(receivedMsg);
                 MsgInfo.Msg successfulCopyMsg = MsgInfo.Msg.newBuilder().setType("successfulCopy").setSenderName(brokerName).build();
-                connection.send(successfulCopyMsg.toByteArray());
+                Connection conn = brokerConnections.get(senderName);
+                conn.send(successfulCopyMsg.toByteArray());
+                logger.info("broker line 369 : copy successful " );
+
             } else if(type.equals("successfulCopy")){
+                logger.info("broker line 357: receive successful from + " + senderName);
                 numOfSuccessCopy++;
 
             }
 
         }
+    }
+
+    private void dealCopy(MsgInfo.Msg receivedMsg){
+        String publishedTopic = receivedMsg.getTopic();
+        logger.info("broker line 298: publishedTopic + " + publishedTopic);
+        ArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
+        if(messages == null){
+            messages = new ArrayList<>();
+        }
+        messages.add(receivedMsg);
+        dataVersion++;
+        msgLists.put(publishedTopic, messages);
     }
 
 

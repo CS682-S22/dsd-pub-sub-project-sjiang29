@@ -48,7 +48,11 @@ public class Membership {
 
     public void markDown(int id){
         this.members.remove(id);
+    }
 
+    public void printLiveMembers(){
+        String s = this.members.keySet().toString();
+        System.out.println("live members:" + s);
     }
 
 

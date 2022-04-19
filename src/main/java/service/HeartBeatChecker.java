@@ -36,7 +36,7 @@ public class HeartBeatChecker implements Runnable {
     @Override
     public void run() {
         Long now = System.nanoTime();
-        Set<Integer> brokerIds = this.heartBeatReceivedTimes.keySet();
+        Set<Integer> brokerIds = this.membership.getAllMembers();
 
         int leaderId = this.membership.getLeaderId();
         logger.info("hb checker line 40:leaderId " + leaderId);
@@ -46,6 +46,7 @@ public class HeartBeatChecker implements Runnable {
             if (timeSinceLastHeartbeat >= timeoutNanos) {
                 logger.info("hb checker line 45: mark down: " + id);
                 this.membership.markDown(id);
+                this.membership.printLiveMembers();
                 // leader is down
                 if (id == leaderId) {
                     logger.info("hb checker line 49: start bully" );
