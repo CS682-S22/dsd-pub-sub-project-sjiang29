@@ -76,8 +76,8 @@ public class Producer {
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 this.leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
                 this.leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
-                Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
-                this.leaderBrokerConnection = new Connection(socket);
+                //Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                //this.leaderBrokerConnection = new Connection(socket);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -99,6 +99,16 @@ public class Producer {
                    .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
            boolean sendingRes = this.leaderBrokerConnection.send(sentMsg.toByteArray());
            if(sendingRes == false){
+               this.msgId--;
+               updateLeaderBrokerConnection();
+               Socket socket = null;
+               try {
+                   socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+               } catch (IOException e) {
+                   e.printStackTrace();
+               }
+               this.leaderBrokerConnection = new Connection(socket);
+               this.leaderBrokerConnection.send(sentMsg.toByteArray());
 
            }
            logger.info("producer line 94 published line ");
@@ -108,8 +118,18 @@ public class Producer {
     public synchronized boolean sendSuccessfully(){
 
 
-        byte[] receivedBytes = this.leaderBrokerConnection.receive();
+
         try {
+            byte[] receivedBytes = this.leaderBrokerConnection.receive();
+            if(receivedBytes == null){
+                updateLeaderBrokerConnection();
+                try {
+                    Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                    this.leaderBrokerConnection = new Connection(socket);
+                } catch (IOException ee) {
+                    ee.printStackTrace();
+                }
+            }
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
             String type = receivedMsg.getType();
             if(type.equals("acknowledge")){
@@ -117,8 +137,8 @@ public class Producer {
             }
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
-            updateLeaderBrokerConnection();
-            sendSuccessfully();
+
+
         }
         return false;
     }
