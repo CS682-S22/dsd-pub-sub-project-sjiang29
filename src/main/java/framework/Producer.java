@@ -19,6 +19,8 @@ import static framework.Broker.logger;
  */
 public class Producer {
     private String leaderBrokerName;
+    private String leaderBrokerAddress;
+    private int leaderBrokerPort;
     private String producerName;
     private volatile boolean isUpdatingLeader;
     private Connection leaderBrokerConnection;
@@ -38,8 +40,8 @@ public class Producer {
         this.isUpdatingLeader = false;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
-        String leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
-        int leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
+        this.leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
+        this.leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
 
         this.loadBalancerConnection = Server.connectToLoadBalancer(this.producerName);
 
@@ -54,11 +56,13 @@ public class Producer {
     }
 
     public void sendCopyNum(int copyNum){
+
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("copyNum").setCopyNum(copyNum).setSenderName(this.producerName).build();
         this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
     public void updateLeaderBrokerConnection(){
+
         byte[] receivedBytes = this.loadBalancerConnection.receive();
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
@@ -70,15 +74,15 @@ public class Producer {
                 int newLeaderId = receivedMsg.getLeaderId();
                 logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
-                String leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
-                int leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
+                this.leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
+                this.leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
                 Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
                 this.leaderBrokerConnection = new Connection(socket);
-
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 
@@ -90,20 +94,14 @@ public class Producer {
      *
      */
     public synchronized void send(String topic, byte[] data){
-       try{
+
            MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
                    .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
-           this.leaderBrokerConnection.send(sentMsg.toByteArray());
+           boolean sendingRes = this.leaderBrokerConnection.send(sentMsg.toByteArray());
+           if(sendingRes == false){
+
+           }
            logger.info("producer line 94 published line ");
-       } catch (IOException  e){
-
-       }
-
-
-
-
-
-
 
     }
 
