@@ -62,10 +62,11 @@ public class LoadBalancer {
                     MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                     String senderName = receivedMsg.getSenderName();
                     connections.put(senderName, this.connection);
-                    logger.info("load balancer line 62: senderName + " + senderName);
+                    logger.info("load balancer line 62: senderName + " + senderName + "type" + receivedMsg.getType());
                     String type = receivedMsg.getType();
                     // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
                     if(isBrokerReq(type, senderName)) {
+                        logger.info("receive coordinator from " + senderName);
                         newLeaderId = receivedMsg.getLeaderId();
 
                         notifyAllHosts();

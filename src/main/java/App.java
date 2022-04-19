@@ -91,11 +91,11 @@ public class App {
                 Thread.sleep(500);
                 producer.send(topic, data);
 
-                sendSuccessfully = producer.sendSuccessfully();
+                sendSuccessfully = producer.sendSuccessfully(topic, data);
                 logger.info("app 95 published successfully line: " + sendSuccessfully);
                 while(!sendSuccessfully){
                     producer.send(topic, data);
-                    sendSuccessfully = producer.sendSuccessfully();
+                    sendSuccessfully = producer.sendSuccessfully(topic, data);
                 }
 
             }

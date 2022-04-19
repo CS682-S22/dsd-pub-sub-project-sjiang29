@@ -22,6 +22,8 @@ public class Producer {
     private String leaderBrokerAddress;
     private int leaderBrokerPort;
     private String producerName;
+    private volatile int numOfSending;
+    private volatile int numOfAck;
     private volatile boolean isUpdatingLeader;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
@@ -38,6 +40,8 @@ public class Producer {
         this.leaderBrokerName = "broker5";
         this.producerName = producerName;
         this.isUpdatingLeader = false;
+        this.numOfSending = 0;
+        this.numOfAck = 0;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
 
         this.leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
@@ -94,7 +98,6 @@ public class Producer {
      *
      */
     public synchronized void send(String topic, byte[] data){
-
            MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("publish")
                    .setContent(ByteString.copyFrom(data)).setId(this.msgId++).setSenderName(this.producerName).build();
            boolean sendingRes = this.leaderBrokerConnection.send(sentMsg.toByteArray());
@@ -109,30 +112,36 @@ public class Producer {
                }
                this.leaderBrokerConnection = new Connection(socket);
                this.leaderBrokerConnection.send(sentMsg.toByteArray());
-
+           } else {
+               this.numOfSending++;
            }
            logger.info("producer line 94 published line ");
-
     }
 
-    public synchronized boolean sendSuccessfully(){
 
-
-
+    public synchronized boolean sendSuccessfully(String topic, byte[] data){
+        byte[] receivedBytes;
         try {
-            byte[] receivedBytes = this.leaderBrokerConnection.receive();
+            receivedBytes = this.leaderBrokerConnection.receive();
+            logger.info("line 120");
             if(receivedBytes == null){
                 updateLeaderBrokerConnection();
                 try {
-                    Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                    Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
                     this.leaderBrokerConnection = new Connection(socket);
+                    if(this.numOfSending > this.numOfAck){
+                        this.send(topic, data);
+                    }
+                    receivedBytes = this.leaderBrokerConnection.receive();
                 } catch (IOException ee) {
                     ee.printStackTrace();
                 }
             }
+
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
             String type = receivedMsg.getType();
             if(type.equals("acknowledge")){
+                this.numOfAck++;
                 return true;
             }
         } catch (InvalidProtocolBufferException e) {

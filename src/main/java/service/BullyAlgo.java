@@ -41,6 +41,7 @@ public class BullyAlgo {
                 Thread t = new Thread(() -> sendCoordinatorMsg(connection, coordinatorMsg));
                 t.start();
             }
+            logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
             connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
 
         }

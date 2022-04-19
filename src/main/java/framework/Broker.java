@@ -117,7 +117,7 @@ public class Broker {
                 Connection connection = this.brokerConnections.get(connectedBrokerName);
 
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 5000);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 3000);
                 hbScheduler.start();
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
