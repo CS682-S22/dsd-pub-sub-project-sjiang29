@@ -1,6 +1,7 @@
 package service;
 
 import com.google.protobuf.ByteString;
+import framework.Broker;
 import network.Connection;
 import proto.MsgInfo;
 import utils.Config;
@@ -50,8 +51,10 @@ public class HeartBeatChecker implements Runnable {
                 // leader is down
                 if (id == leaderId) {
                     logger.info("hb checker line 49: start bully" );
+                    Broker.isElecting = true;
                     int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections, this.connectionToLoadBalancer);
                     if (newLeaderId != -1) {
+                        Broker.isElecting = false;
                         this.membership.setLeaderId(newLeaderId);
                     }
                 }

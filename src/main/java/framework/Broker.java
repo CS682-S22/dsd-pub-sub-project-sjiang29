@@ -25,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Broker {
     public static  Logger logger = LogManager.getLogger();
-    public volatile boolean isElecting;
+    public static volatile boolean isElecting;
     private String brokerName;
     private int brokerId;
     private ServerSocket server;
@@ -55,7 +55,7 @@ public class Broker {
     public Broker(String brokerName) {
         this.brokerName = brokerName;
         this.brokerId = Config.nameToId.get(this.brokerName);
-        this.isElecting = false;
+        isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
         this.copyStatuses = new ConcurrentHashMap<>();
         this.topicToClient = new ConcurrentHashMap<>();
@@ -114,7 +114,7 @@ public class Broker {
     public void sendHb() {
         Set<Integer> allMembers = this.membership.getAllMembers();
         logger.info("broker line 112 isElecting: " + this.isElecting);
-        if(this.isElecting == false){
+        if(Broker.isElecting == false){
             for(int brokerMemberId : allMembers){
                 logger.info("broker line 107: send hb to: " + brokerMemberId);
                 String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
@@ -127,8 +127,6 @@ public class Broker {
                 //hbReceiver.run();
             }
         }
-
-
 
     }
 
@@ -303,7 +301,7 @@ public class Broker {
                 copyStatuses.put(producerName, copyStatus);
                 logger.info("broker line 295: copyNum + " + requiredCopyNum);
             } else if(type.equals("publish")){
-                if(isElecting == false){
+                if(Broker.isElecting == false){
                     String publishedTopic = receivedMsg.getTopic();
                     topicToClient.put(publishedTopic, producerName);
                     logger.info("broker line 298: publishedTopic + " + publishedTopic);
@@ -330,6 +328,7 @@ public class Broker {
                         }
                     }
                 } else {
+                    logger.info("broker line 331: rejection");
                     MsgInfo.Msg rejectPubMsg = MsgInfo.Msg.newBuilder().setType("rejection").setSenderName(brokerName).build();
                     this.connection.send(rejectPubMsg.toByteArray());
                 }
@@ -380,6 +379,7 @@ public class Broker {
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){
+                Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
             } else if (type.equals("election")){

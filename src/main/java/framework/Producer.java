@@ -129,6 +129,7 @@ public class Producer {
         try {
             receivedBytes = this.leaderBrokerConnection.receive();
             logger.info("line 120");
+
             if(receivedBytes == null){
                 updateLeaderBrokerConnection();
 //                try {
@@ -149,6 +150,8 @@ public class Producer {
             if(type.equals("acknowledge")){
                 this.numOfAck++;
                 return true;
+            } else if(type.equals("rejection")){
+                return false;
             }
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
