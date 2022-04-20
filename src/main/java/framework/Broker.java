@@ -84,8 +84,7 @@ public class Broker {
     }
 
     public void connectToOtherBrokers(){
-        boolean trying = true;
-        while(trying){
+        while(true){
             try{
 
                 for(int id : Config.brokerList.keySet()) {
@@ -99,10 +98,10 @@ public class Broker {
                         Connection connection = new Connection(socket);
                         this.brokerConnections.put(connectedBrokerName, connection);
                         this.membership.markAlive(connectedBrokerId);
-                   }
+                    }
                 }
 
-                trying = false;
+                break;
             }catch (IOException e){
                 try {
                     Thread.sleep(500);
@@ -115,24 +114,23 @@ public class Broker {
     }
 
     public void sendHb() {
-        Set<Integer> allMembers = Config.brokerList.keySet();
-        //logger.info("broker line 112 isElecting: " + this.isElecting);
-        //if(Broker.isElecting == false){
+        Set<Integer> allMembers = this.membership.getAllMembers();
+        logger.info("broker line 112 isElecting: " + this.isElecting);
+        if(this.isElecting == false){
             for(int brokerMemberId : allMembers){
-                //logger.info("broker line 107: send hb to: " + brokerMemberId);
-                if(this.brokerId != brokerMemberId){
-                    String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
-                    Connection connection = this.brokerConnections.get(connectedBrokerName);
+                logger.info("broker line 107: send hb to: " + brokerMemberId);
+                String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
+                Connection connection = this.brokerConnections.get(connectedBrokerName);
 
-                    HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                    HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
-                    hbScheduler.start();
-                }
-
+                HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 3000);
+                hbScheduler.start();
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
             }
-        //}
+        }
+
+
 
     }
 
@@ -160,13 +158,6 @@ public class Broker {
         sendHb();
         this.failureDetector.start();
 
-//        for(String name : this.brokerConnections.keySet()){
-//            Connection connection = this.brokerConnections.get(name);
-//            Thread connectionHandler = new Thread(new ConnectionHandler(connection));
-//            connectionHandler.start();
-//        }
-
-
         while(this.isRunning){
             //Thread t = new Thread(() -> connectToOtherBrokers());
             //t.start();
@@ -190,18 +181,7 @@ public class Broker {
      * Listens to new socket connection, return corresponding connection according to value of delay and lossRate
      * @return see method description
      */
-    public Connection buildNewConnection() {
-        Socket socket = null;
-        try {
-            socket = this.server.accept();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        logger.info("broker's line 84: someone is calling");
-        Connection connection = new Connection(socket);
-        return connection;
-    }
 
     public boolean isLeader(){
         //int currentBrokerId = this.membership.getId(this.brokerName);
@@ -264,8 +244,7 @@ public class Broker {
 
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator")
-                    || type.equals("copy") || type.equals("successfulCopy") || type.equals("dataVersion")
-                    || type.equals("earliestDataVersion") || type.equals("successfulSync");
+                    || type.equals("copy") || type.equals("successfulCopy");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -366,6 +345,18 @@ public class Broker {
                 logger.info("broker line 327: send to follower");
                 Thread t = new Thread(() -> sendToFollower(copiedMsg, connection));
                 t.start();
+//                byte[] receivedBytes = this.connection.receive();
+//                try {
+//                    MsgInfo.Msg replyMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+//                    if(replyMsg.getType().equals("successfulCopy")){
+//                        logger.info("broker line 332: receive successful from + " + replyMsg.getSenderName());
+//                        numOfSuccessCopy++;
+//                    }
+//                } catch (InvalidProtocolBufferException e) {
+//                    e.printStackTrace();
+//                }
+
+
             }
 
         }
@@ -374,7 +365,7 @@ public class Broker {
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
             if(type.equals("HeartBeat")){
-                logger.info("broker line 378: receive hb from + " + senderName);
+                //logger.info("broker line 327: receive hb from + " + senderName);
                 long currentTime = System.nanoTime();
                 int id = receivedMsg.getSenderId();
                 //logger.info("broker line 336: mark time + " + id + currentTime);
@@ -384,45 +375,10 @@ public class Broker {
                 Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
-                String replyToNewLeader = Server.buildReplyToNewLeader(msgLists);
-                sendReplyToNewLeader(replyToNewLeader, newLeaderId);
-
-            }
-//            else if(type.equals("dataVersion")) {
-//                String reply = receivedMsg.getReply();
-//                dataVersions.add(reply);
-//                try {
-//                    Thread.sleep(200);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                String earliestDataVersion = pickEarliestDataVersion();
-//                sendEarliestToFollowers(earliestDataVersion);
-//            } else if(type.equals("earliestDataVersion")) {
-//                String earliestDataVersion = receivedMsg.getReply();
-//                dealEarliestDataVersion(earliestDataVersion);
-//                logger.info("broker line 404: *** send successfulSync");
-//                MsgInfo.Msg successfulCopyMsg = MsgInfo.Msg.newBuilder().setType("successfulSync").setSenderName(brokerName).build();
-//                Connection conn = brokerConnections.get(senderName);
-//                conn.send(successfulCopyMsg.toByteArray());
-//            } else if(type.equals("successfulSync")) {
-//                logger.info("broker line 410: *** get successfulSync");
-//                numOfSync++;
-//                try {
-//                    Thread.sleep(200);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                if(numOfSync == membership.getFollowers(brokerId).size()){
-//                    Broker.isElecting = false;
-//                }
-//
-//            }
-            else if (type.equals("election")){
-                isElecting = true;
+            } else if (type.equals("election")){
+                Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);
                 if(newLeaderId != -1){
-                    isElecting = false;
                     membership.setLeaderId(newLeaderId);
                 }
             } else if(type.equals("copy")){
@@ -443,78 +399,18 @@ public class Broker {
             }
 
         }
-        private void dealCopy(MsgInfo.Msg receivedMsg){
-            String publishedTopic = receivedMsg.getTopic();
-            logger.info("broker line 298: publishedTopic + " + publishedTopic);
-            CopyOnWriteArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
-            if(messages == null){
-                messages = new CopyOnWriteArrayList<>();
-            }
-            messages.add(receivedMsg);
-            msgLists.put(publishedTopic, messages);
+    }
+
+    private void dealCopy(MsgInfo.Msg receivedMsg){
+        String publishedTopic = receivedMsg.getTopic();
+        logger.info("broker line 298: publishedTopic + " + publishedTopic);
+        CopyOnWriteArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
+        if(messages == null){
+            messages = new CopyOnWriteArrayList<>();
         }
+        messages.add(receivedMsg);
 
-        private void sendReplyToNewLeader(String replyToNewLeader, int newLeaderId){
-            MsgInfo.Msg msgToNewLeader = MsgInfo.Msg.newBuilder().setType("dataVersion").setReply(replyToNewLeader).
-                    setSenderName(brokerName).build();
-            Connection connectionToNewLeader = brokerConnections.get(newLeaderId);
-            connectionToNewLeader.send(msgToNewLeader.toByteArray());
-        }
-
-        private String pickEarliestDataVersion(){
-
-            String s = dataVersions.get(0);
-            String res = s;
-            for(String dv : dataVersions){
-                int[] nums = Server.getTopicNum(dv);
-                if(Server.getTopicNum(res)[0] >= nums[0] && Server.getTopicNum(res)[1] >= nums[1]){
-                    res = dv;
-                }
-            }
-            return res;
-        }
-
-        private void sendEarliestToFollowers(String earliestDataVersion){
-            MsgInfo.Msg earliestDVMsg = MsgInfo.Msg.newBuilder().setType("earliestDataVersion").setReply(earliestDataVersion)
-                    .setSenderName(brokerName).build();
-            ArrayList<Integer> followers = membership.getFollowers(brokerId);
-            for(int follower: followers){
-                Connection connection = brokerConnections.get(Config.brokerList.get(follower).getHostName());
-                logger.info("broker line 327: send to follower");
-                Thread t = new Thread(() -> sendToFollower(earliestDVMsg, connection));
-                t.start();
-            }
-        }
-
-        private void dealEarliestDataVersion(String earliestDataVersion){
-            int[] nums = Server.getTopicNum(earliestDataVersion);
-            int countOfTopic1 = nums[0];
-            int countOftopic2 = nums[1];
-            String topic1 = Config.topic1;
-            String topic2 = Config.topic2;
-
-            if(countOfTopic1 < msgLists.get(topic1).size()){
-                rollBack(countOfTopic1, topic1);
-            }
-
-            if(countOftopic2 < msgLists.get(topic2).size()){
-                rollBack(countOftopic2, topic2);
-            }
-        }
-
-        private void rollBack(int count, String topic){
-            int size = msgLists.get(topic).size();
-            int diff = size - count;
-            for(int i = 0; i < diff; i++){
-                size = msgLists.get(topic).size();
-                msgLists.get(topic).remove(size - 1);
-            }
-        }
-
-
-
-
-
+        msgLists.put(publishedTopic, messages);
     }
 
 
