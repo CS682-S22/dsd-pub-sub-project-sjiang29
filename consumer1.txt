@@ -1,1 +1,4 @@
+[07.27 10:27:23] chrome.exe *64 - yuedust.yuedu.126.net:443 close, 335 bytes sent, 3716 bytes (3.62 KB) received, lifetime 01:00
 [07.27 10:27:23] chrome.exe *64 - easyread.nosdn.127.net:443 close, 336 bytes sent, 3462 bytes (3.38 KB) received, lifetime 01:00
+[07.27 10:27:23] chrome.exe *64 - manhua.163.com:443 close, 568 bytes sent, 168 bytes received, lifetime 01:00
+[07.27 10:27:24] chrome.exe *64 - www.zhihu.com:80 close, 1208 bytes (1.17 KB) sent, 273 bytes received, lifetime 05:06

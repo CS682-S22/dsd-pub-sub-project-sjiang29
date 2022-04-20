@@ -1,1 +1,5 @@
-2015-07-29 17:41:41,536 - INFO  [main:QuorumPeerConfig@101] - Reading configuration from: /etc/zookeeper/conf/zoo.cfg
+2015-07-29 17:41:41,544 - INFO  [main:QuorumPeerConfig@334] - Defaulting to majority quorums
+2015-07-29 17:41:41,555 - INFO  [main:DatadirCleanupManager@79] - autopurge.purgeInterval set to 0
+2015-07-29 17:41:41,579 - INFO  [main:QuorumPeerMain@127] - Starting quorum peer
+2015-07-29 17:41:41,648 - INFO  [main:QuorumPeer@913] - tickTime set to 2000
+2015-07-29 17:41:41,649 - INFO  [main:QuorumPeer@944] - maxSessionTimeout set to -1

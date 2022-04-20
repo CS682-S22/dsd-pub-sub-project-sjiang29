@@ -25,7 +25,7 @@ public class Producer {
     private int copyNum;
     private volatile int numOfSending;
     private volatile int numOfAck;
-    private volatile boolean hasNewLeader;
+
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
     private int msgId;
@@ -39,20 +39,18 @@ public class Producer {
     public Producer(String producerName, int copyNum) {
         this.msgId = 1;
         this.leaderBrokerName = "broker5";
-        this.producerName = producerName;
-        this.copyNum = copyNum;
-        this.hasNewLeader = false;
-        this.numOfSending = 0;
-        this.numOfAck = 0;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
-
         this.leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
         this.leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
 
+        this.producerName = producerName;
+        this.copyNum = copyNum;
+        this.numOfSending = 0;
+        this.numOfAck = 0;
         this.loadBalancerConnection = Server.connectToLoadBalancer(this.producerName);
 
         try {
-            Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+            Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
             this.leaderBrokerConnection = new Connection(socket);
 
         } catch (IOException e) {
@@ -76,7 +74,7 @@ public class Producer {
 
             if(receivedMsg.getType().equals("coordinator")){
 
-                this.hasNewLeader = true;
+                //this.hasNewLeader = true;
 
                 int newLeaderId = receivedMsg.getLeaderId();
                 logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
@@ -108,7 +106,7 @@ public class Producer {
            if(sendingRes == false){
                this.msgId--;
                updateLeaderBrokerConnection();
-               Socket socket = null;
+               //Socket socket = null;
 //               try {
 //                   socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
 //               } catch (IOException e) {
