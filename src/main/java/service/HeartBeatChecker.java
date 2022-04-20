@@ -54,7 +54,7 @@ public class HeartBeatChecker implements Runnable {
                     Broker.isElecting = true;
                     int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections, this.connectionToLoadBalancer);
                     if (newLeaderId != -1) {
-                        //Broker.isElecting = false;
+                        Broker.isElecting = false;
                         this.membership.setLeaderId(newLeaderId);
                         //logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
                         //connectionToLoadBalancer.send(coordinatorMsg.toByteArray());

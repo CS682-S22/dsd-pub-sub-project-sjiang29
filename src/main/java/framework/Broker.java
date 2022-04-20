@@ -379,6 +379,7 @@ public class Broker {
                 Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);
                 if(newLeaderId != -1){
+                    Broker.isElecting = false;
                     membership.setLeaderId(newLeaderId);
                 }
             } else if(type.equals("copy")){
