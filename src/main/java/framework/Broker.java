@@ -120,12 +120,15 @@ public class Broker {
         //if(Broker.isElecting == false){
             for(int brokerMemberId : allMembers){
                 //logger.info("broker line 107: send hb to: " + brokerMemberId);
-                String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
-                Connection connection = this.brokerConnections.get(connectedBrokerName);
+                if(this.brokerId != brokerMemberId){
+                    String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
+                    Connection connection = this.brokerConnections.get(connectedBrokerName);
 
-                HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
-                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
-                hbScheduler.start();
+                    HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
+                    HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
+                    hbScheduler.start();
+                }
+
                 //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
                 //hbReceiver.run();
             }
@@ -157,6 +160,11 @@ public class Broker {
         sendHb();
         this.failureDetector.start();
 
+//        for(String name : this.brokerConnections.keySet()){
+//            Connection connection = this.brokerConnections.get(name);
+//            Thread connectionHandler = new Thread(new ConnectionHandler(connection));
+//            connectionHandler.start();
+//        }
 
 
         while(this.isRunning){
