@@ -35,6 +35,7 @@ public class Broker {
     private volatile boolean isRunning;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
+    private CopyOnWriteArrayList<String> dataVersions;
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
     private ConcurrentHashMap<String, Connection> brokerConnections;
@@ -57,6 +58,7 @@ public class Broker {
         this.brokerId = Config.nameToId.get(this.brokerName);
         isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
+        this.dataVersions = new CopyOnWriteArrayList<>();
         this.copyStatuses = new ConcurrentHashMap<>();
         this.topicToClient = new ConcurrentHashMap<>();
         this.receivedHeartBeatTime = new Hashtable<>();
@@ -251,7 +253,7 @@ public class Broker {
 
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator")
-                    || type.equals("copy") || type.equals("successfulCopy");
+                    || type.equals("copy") || type.equals("successfulCopy") || type.equals("dataVersion");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -382,6 +384,19 @@ public class Broker {
                 Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
+                String replyToNewLeader = Server.buildReplyToNewLeader(msgLists);
+                sendReplyToNewLeader(replyToNewLeader, newLeaderId);
+
+            } else if(type.equals("dataVersion")) {
+                String reply = receivedMsg.getReply();
+                dataVersions.add(reply);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String earliestDataVersion = pickEarliestDataVersion();
+
             } else if (type.equals("election")){
                 isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);
@@ -419,6 +434,28 @@ public class Broker {
         dataVersion++;
         msgLists.put(publishedTopic, messages);
     }
+
+    private void sendReplyToNewLeader(String replyToNewLeader, int newLeaderId){
+        MsgInfo.Msg msgToNewLeader = MsgInfo.Msg.newBuilder().setType("dataVersion").setReply(replyToNewLeader).
+                setSenderName(brokerName).build();
+        Connection connectionToNewLeader = brokerConnections.get(newLeaderId);
+        connectionToNewLeader.send(msgToNewLeader.toByteArray());
+    }
+
+    private String pickEarliestDataVersion(){
+
+        String s = dataVersions.get(0);
+        String res = s;
+        for(String dv : dataVersions){
+            int[] nums = Server.getTopicNum(dv);
+            if(Server.getTopicNum(res)[0] >= nums[0] && Server.getTopicNum(res)[1] >= nums[1]){
+                res = dv;
+            }
+        }
+
+        return res;
+    }
+
 
 
 

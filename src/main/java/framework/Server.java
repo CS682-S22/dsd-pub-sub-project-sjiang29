@@ -7,6 +7,9 @@ import utils.Config;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static framework.Broker.logger;
 
@@ -44,6 +47,38 @@ public class Server {
             e.printStackTrace();
         }
         return connection;
+    }
+
+    public static String buildReplyToNewLeader(ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
+        StringBuilder sb = new StringBuilder();
+        String topic1 = Config.topic1;
+        String topic2 = Config.topic2;
+        int num1 = 0;
+        int num2 = 0;
+
+        if(msgLists.containsKey(topic1)){
+            num1 = msgLists.get(topic1).size();
+        }
+        if(msgLists.containsKey(topic2)){
+            num2 = msgLists.get(topic2).size();
+        }
+
+        sb.append(topic1).append(":").append(num1).append(";").append(topic1).append(":").append(num2);
+        return sb.toString();
+    }
+
+    public static int[] getTopicNum(String dataVersion){
+        int[] res = new int[2];
+        ArrayList<Integer> nums = new ArrayList<>();
+        String[] parts = dataVersion.split(";");
+        for(String part : parts){
+            String[] data = part.split(":");
+            int num = Integer.parseInt(data[1]);
+            nums.add(num);
+        }
+        res[0] = nums.get(0);
+        res[1] = nums.get(1);
+        return res;
     }
 
 
