@@ -22,9 +22,10 @@ public class Producer {
     private String leaderBrokerAddress;
     private int leaderBrokerPort;
     private String producerName;
+    private int copyNum;
     private volatile int numOfSending;
     private volatile int numOfAck;
-    private volatile boolean isUpdatingLeader;
+    private volatile boolean hasNewLeader;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
     private int msgId;
@@ -35,11 +36,12 @@ public class Producer {
      * @param producerName
      *
      */
-    public Producer(String producerName) {
+    public Producer(String producerName, int copyNum) {
         this.msgId = 1;
         this.leaderBrokerName = "broker5";
         this.producerName = producerName;
-        this.isUpdatingLeader = false;
+        this.copyNum = copyNum;
+        this.hasNewLeader = false;
         this.numOfSending = 0;
         this.numOfAck = 0;
         int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
@@ -62,6 +64,7 @@ public class Producer {
     public void sendCopyNum(int copyNum){
 
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("copyNum").setCopyNum(copyNum).setSenderName(this.producerName).build();
+        logger.info("producer line 67: send num copy to" + this.leaderBrokerName );
         this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
@@ -73,15 +76,16 @@ public class Producer {
 
             if(receivedMsg.getType().equals("coordinator")){
 
-                this.isUpdatingLeader = true;
+                this.hasNewLeader = true;
 
                 int newLeaderId = receivedMsg.getLeaderId();
                 logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 this.leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
                 this.leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
-                //Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
-                //this.leaderBrokerConnection = new Connection(socket);
+                Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                this.leaderBrokerConnection = new Connection(socket);
+                sendCopyNum(this.copyNum);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -105,17 +109,18 @@ public class Producer {
                this.msgId--;
                updateLeaderBrokerConnection();
                Socket socket = null;
-               try {
-                   socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
-               } catch (IOException e) {
-                   e.printStackTrace();
-               }
-               this.leaderBrokerConnection = new Connection(socket);
+//               try {
+//                   socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+//               } catch (IOException e) {
+//                   e.printStackTrace();
+//               }
+//               this.leaderBrokerConnection = new Connection(socket);
+
                this.leaderBrokerConnection.send(sentMsg.toByteArray());
            } else {
                this.numOfSending++;
            }
-           logger.info("producer line 94 published line ");
+           logger.info("producer line 94 published line to: " + this.leaderBrokerName);
     }
 
 
@@ -126,16 +131,17 @@ public class Producer {
             logger.info("line 120");
             if(receivedBytes == null){
                 updateLeaderBrokerConnection();
-                try {
-                    Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
-                    this.leaderBrokerConnection = new Connection(socket);
+//                try {
+//                    Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
+//                    this.leaderBrokerConnection = new Connection(socket);
+
                     if(this.numOfSending > this.numOfAck){
                         this.send(topic, data);
                     }
                     receivedBytes = this.leaderBrokerConnection.receive();
-                } catch (IOException ee) {
-                    ee.printStackTrace();
-                }
+//                } catch (IOException ee) {
+//                    ee.printStackTrace();
+//                }
             }
 
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);

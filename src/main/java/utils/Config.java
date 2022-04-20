@@ -66,6 +66,8 @@ public class Config {
         put(consumer1.getHostName(), topic1); put(consumer2.getHostName(), topic2);
     }};
 
+
+
     public static final String writtenFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer1.txt";
     public static final String writtenFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer2.txt";
     public static final String writtenFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer3.txt";

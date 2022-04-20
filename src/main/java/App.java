@@ -68,7 +68,7 @@ public class App {
     public static void dealProducer(String producerName, int copyNum){
         String file = Config.producerAndFile.get(producerName);
         logger.info("App line 64: file" + file);
-        Producer producer = new Producer(producerName);
+        Producer producer = new Producer(producerName, copyNum);
         runProducer(producer, file, copyNum);
     }
 
