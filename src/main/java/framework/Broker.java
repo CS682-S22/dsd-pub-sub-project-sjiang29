@@ -69,7 +69,7 @@ public class Broker {
         this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,8000000000L,
-                this.membership, this.brokerConnections, this.connectionToLoadBalancer), 8000);
+                this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 8000);
         this.isRunning = true;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
@@ -381,7 +381,7 @@ public class Broker {
 
             } else if (type.equals("election")){
                 Broker.isElecting = true;
-                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);
+                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer, msgLists);
                 if(newLeaderId != -1){
                     Broker.isElecting = false;
                     membership.setLeaderId(newLeaderId);

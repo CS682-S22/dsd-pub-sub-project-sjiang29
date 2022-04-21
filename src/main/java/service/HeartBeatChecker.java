@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static framework.Broker.logger;
 
@@ -22,16 +23,22 @@ public class HeartBeatChecker implements Runnable {
     private Membership membership;
     private ConcurrentHashMap<String, Connection> brokerConnections;
     private Connection connectionToLoadBalancer;
+    private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
 
 
-    public HeartBeatChecker(String hostBrokerName, ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
-                            ConcurrentHashMap<String, Connection> brokerConnections, Connection connectionToLoadBalancer) {
+    public HeartBeatChecker(String hostBrokerName,
+                            ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes,
+                            long timeoutNanos, Membership membership,
+                            ConcurrentHashMap<String, Connection> brokerConnections,
+                            Connection connectionToLoadBalancer,
+                            ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
         this.membership = membership;
         this.brokerConnections = brokerConnections;
         this.connectionToLoadBalancer = connectionToLoadBalancer;
+        this.msgLists = msgLists;
     }
 
     @Override
@@ -52,7 +59,8 @@ public class HeartBeatChecker implements Runnable {
                 if (id == leaderId) {
                     logger.info("hb checker line 49: start bully" );
                     Broker.isElecting = true;
-                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections, this.connectionToLoadBalancer);
+                    int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections,
+                            this.connectionToLoadBalancer, this.msgLists);
                     if (newLeaderId != -1) {
                         Broker.isElecting = false;
                         this.membership.setLeaderId(newLeaderId);

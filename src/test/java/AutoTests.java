@@ -34,6 +34,9 @@ public class AutoTests {
         membership.markAlive(7);
         membership.markAlive(6);
         ConcurrentHashMap<String, Connection> brokerConnections = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+        msgLists.put(Config.topic1, new CopyOnWriteArrayList<>());
+        msgLists.put(Config.topic2, new CopyOnWriteArrayList<>());
         Connection connectionToLoadBalancer;
         try {
             ServerSocket server = new ServerSocket(8000);
@@ -52,7 +55,7 @@ public class AutoTests {
             heartBeatReceivedTimes.put(8, 30000000000L);
             heartBeatReceivedTimes.put(9, 30000000000L);
             HeartBeatChecker hbc = new HeartBeatChecker(hostBrokerName, heartBeatReceivedTimes, timeoutNanos,
-                    membership, brokerConnections, connectionToLoadBalancer);
+                    membership, brokerConnections, connectionToLoadBalancer, msgLists);
             hbc.run();
             int leader = membership.getLeaderId();
             Assertions.assertEquals(leader, 10);
@@ -74,6 +77,9 @@ public class AutoTests {
         membership.markAlive(7);
         membership.markAlive(6);
         ConcurrentHashMap<String, Connection> brokerConnections = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+        msgLists.put(Config.topic1, new CopyOnWriteArrayList<>());
+        msgLists.put(Config.topic2, new CopyOnWriteArrayList<>());
         Connection connectionToLoadBalancer;
         try {
             ServerSocket server = new ServerSocket(8000);
@@ -92,7 +98,7 @@ public class AutoTests {
             heartBeatReceivedTimes.put(8, 30000000000L);
             heartBeatReceivedTimes.put(10, 30000000000L);
             HeartBeatChecker hbc = new HeartBeatChecker(hostBrokerName, heartBeatReceivedTimes, timeoutNanos,
-                    membership, brokerConnections, connectionToLoadBalancer);
+                    membership, brokerConnections, connectionToLoadBalancer, msgLists);
             hbc.run();
             int leader = membership.getLeaderId();
             Assertions.assertEquals(leader, 9);
@@ -118,8 +124,10 @@ public class AutoTests {
             brokerConnections.put("broker4", new Connection(s1));
             brokerConnections.put("broker3", new Connection(s2));
             Connection connectionToLoadBalancer = new Connection(s3);
-
-            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer);
+            ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+            msgLists.put(Config.topic1, new CopyOnWriteArrayList<>());
+            msgLists.put(Config.topic2, new CopyOnWriteArrayList<>());
+            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer, msgLists);
             Assertions.assertEquals(newLeader, 10);
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,8 +151,11 @@ public class AutoTests {
             brokerConnections.put("broker4", new Connection(s1));
             brokerConnections.put("broker3", new Connection(s2));
             Connection connectionToLoadBalancer = new Connection(s3);
+            ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+            msgLists.put(Config.topic1, new CopyOnWriteArrayList<>());
+            msgLists.put(Config.topic2, new CopyOnWriteArrayList<>());
 
-            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer);
+            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer, msgLists);
             Assertions.assertEquals(newLeader, -1);
         } catch (IOException e) {
             e.printStackTrace();
