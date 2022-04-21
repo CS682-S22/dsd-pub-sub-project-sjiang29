@@ -86,47 +86,52 @@ public class Broker {
     }
 
     public void connectToOtherBrokers(){
-        while(true){
-            try{
+        //while(true){
 
-                for(int id : Config.brokerList.keySet()) {
-                    if (id != this.brokerId) {
-                        HostInfo hostInfo = Config.brokerList.get(id);
-                        String connectedBrokerAddress = hostInfo.getHostAddress();
-                        String connectedBrokerName = hostInfo.getHostName();
-                        int connectedBrokerId = hostInfo.getId();
-                        int connectedBrokerPort = hostInfo.getPort();
-                        Socket socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
-                        Connection connection = new Connection(socket);
-                        this.brokerConnections.put(connectedBrokerName, connection);
-                        this.membership.markAlive(connectedBrokerId);
-                    }
+            for(int id : Config.brokerList.keySet()) {
+                if (id != this.brokerId) {
+                    HostInfo hostInfo = Config.brokerList.get(id);
+                    String connectedBrokerAddress = hostInfo.getHostAddress();
+                    String connectedBrokerName = hostInfo.getHostName();
+                    int connectedBrokerId = hostInfo.getId();
+                    int connectedBrokerPort = hostInfo.getPort();
+//                        Socket socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
+//                        Connection connection = new Connection(socket);
+//                        this.brokerConnections.put(connectedBrokerName, connection);
+//                        this.membership.markAlive(connectedBrokerId);
+                    Thread t = new Thread(() -> {
+                        connectToBroker(connectedBrokerAddress, connectedBrokerPort,
+                                connectedBrokerId, connectedBrokerName);
+                    });
+                    t.start();
                 }
+            }
+            //break;
+        //}
+    }
 
-                break;
-            }catch (IOException e){
+    private void connectToBroker(String connectedBrokerAddress, int connectedBrokerPort,
+                                 int connectedBrokerId,String connectedBrokerName) {
+        boolean trying = true;
+        Socket socket = null;
+        while(trying){
+            try {
+                socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
+                trying = false;
+            } catch (IOException e) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
                 e.printStackTrace();
+
             }
         }
-    }
 
-    private void connectToBroker(String connectedBrokerAddress, int connectedBrokerPort,
-                                 int connectedBrokerId,String connectedBrokerName){
-        Socket socket = null;
-        try {
-            socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
-            Connection connection = new Connection(socket);
-            this.brokerConnections.put(connectedBrokerName, connection);
-            this.membership.markAlive(connectedBrokerId);
-        } catch (IOException e) {
-            connectToBroker(connectedBrokerAddress, connectedBrokerPort, connectedBrokerId, connectedBrokerName);
-            e.printStackTrace();
-        }
+        Connection connection = new Connection(socket);
+        this.brokerConnections.put(connectedBrokerName, connection);
+        this.membership.markAlive(connectedBrokerId);
 
     }
 
