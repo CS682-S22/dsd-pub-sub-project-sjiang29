@@ -20,6 +20,7 @@ public class Consumer implements Runnable {
     private String leaderBrokerName;
     private String leaderBrokerAddress;
     private int leaderBrokerPort;
+    int leaderBrokerId;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
     private String consumerName;
@@ -36,7 +37,7 @@ public class Consumer implements Runnable {
      */
     public Consumer(String consumerName, String topic, int startingPosition) {
         this.leaderBrokerName = "broker5";
-        int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
+        this.leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
         this.leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
         this.leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
         this.consumerName = consumerName;
@@ -66,6 +67,7 @@ public class Consumer implements Runnable {
             if(receivedMsg.getType().equals("coordinator")){
 
                 int newLeaderId = receivedMsg.getLeaderId();
+                this.leaderBrokerId = newLeaderId;
                 logger.info("consumer line 70: new leader is promoted, new leader: " + newLeaderId);
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 this.leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
@@ -87,6 +89,7 @@ public class Consumer implements Runnable {
         int requiredMsgCount = 20;
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic).setSenderName(this.consumerName)
                 .setStartingPosition(startingPoint).setRequiredMsgCount(requiredMsgCount).build();
+        logger.info("send request to:" + this.leaderBrokerId);
         this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
@@ -119,6 +122,7 @@ public class Consumer implements Runnable {
                     this.subscribedMsgQ.put(receivedMsg);
                 }
             } catch (InvalidProtocolBufferException | InterruptedException e) {
+                updateLeaderBrokerConnection();
                 e.printStackTrace();
             }
         }

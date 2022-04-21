@@ -21,6 +21,7 @@ public class Producer {
     private String leaderBrokerName;
     private String leaderBrokerAddress;
     private int leaderBrokerPort;
+    private int leaderBrokerId;
     private String producerName;
     private int copyNum;
     private volatile int numOfSending;
@@ -39,9 +40,9 @@ public class Producer {
     public Producer(String producerName, int copyNum) {
         this.msgId = 1;
         this.leaderBrokerName = "broker5";
-        int leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
-        this.leaderBrokerAddress = Config.brokerList.get(leaderBrokerId).getHostAddress();
-        this.leaderBrokerPort = Config.brokerList.get(leaderBrokerId).getPort();
+        this.leaderBrokerId = Config.nameToId.get(this.leaderBrokerName);
+        this.leaderBrokerAddress = Config.brokerList.get(this.leaderBrokerId).getHostAddress();
+        this.leaderBrokerPort = Config.brokerList.get(this.leaderBrokerId).getPort();
 
         this.producerName = producerName;
         this.copyNum = copyNum;
@@ -77,6 +78,7 @@ public class Producer {
                 //this.hasNewLeader = true;
 
                 int newLeaderId = receivedMsg.getLeaderId();
+                this.leaderBrokerId = newLeaderId;
                 logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
                 this.leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
                 this.leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
