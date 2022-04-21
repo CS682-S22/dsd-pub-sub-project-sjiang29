@@ -28,7 +28,6 @@
 [07.27 10:27:54] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:27:54] chrome.exe *64 - hm2.cnzz.com:80 close, 667 bytes sent, 254 bytes received, lifetime <1 sec
 [07.27 10:28:05] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:28:05] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:28:05] chrome.exe *64 - hm2.cnzz.com:80 close, 668 bytes sent, 254 bytes received, lifetime <1 sec
 [07.27 10:28:13] chrome.exe *64 - csi.gstatic.com:443 close, 3895 bytes (3.80 KB) sent, 5675 bytes (5.54 KB) received, lifetime 05:37
 [07.27 10:28:16] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
@@ -47,6 +46,21 @@
 [07.27 10:28:32] chrome.exe *64 - mhfm2.us.cdndm5.com:80 close, 421 bytes sent, 13559 bytes (13.2 KB) received, lifetime 02:10
 [07.27 10:28:32] chrome.exe *64 - mhfm2.us.cdndm5.com:80 close, 421 bytes sent, 16186 bytes (15.8 KB) received, lifetime 02:10
 [07.27 10:28:32] chrome.exe *64 - mhfm2.us.cdndm5.com:80 close, 421 bytes sent, 12814 bytes (12.5 KB) received, lifetime 02:10
+[07.27 10:28:33] chrome.exe *64 - ad.sitemaji.com:80 close, 1661 bytes (1.62 KB) sent, 8185 bytes (7.99 KB) received, lifetime 04:50
+[07.27 10:28:45] chrome.exe *64 - ww3.sinaimg.cn:80 close, 435 bytes sent, 30329 bytes (29.6 KB) received, lifetime 05:01
+[07.27 10:28:45] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.27 10:28:45] chrome.exe *64 - hm2.cnzz.com:80 close, 668 bytes sent, 254 bytes received, lifetime <1 sec
+[07.27 10:28:52] chrome.exe *64 - plus.google.com:443 close, 41419 bytes (40.4 KB) sent, 1134150 bytes (1.08 MB) received, lifetime 06:33
+[07.27 10:28:53] chrome.exe *64 - cm.g.doubleclick.net:443 close, 4012 bytes (3.91 KB) sent, 3194 bytes (3.11 KB) received, lifetime 05:46
+[07.27 10:29:03] chrome.exe *64 - cdn.innity.net:80 close, 775 bytes sent, 4638 bytes (4.52 KB) received, lifetime 05:16
+[07.27 10:29:03] chrome.exe *64 - avd.innity.net:80 close, 675 bytes sent, 4186 bytes (4.08 KB) received, lifetime 05:14
+[07.27 10:29:03] chrome.exe *64 - trc.taboola.com:80 close, 2680 bytes (2.61 KB) sent, 1550 bytes (1.51 KB) received, lifetime 05:16
+[07.27 10:29:03] chrome.exe *64 - media.innity.net:80 close, 10642 bytes (10.3 KB) sent, 81085 bytes (79.1 KB) received, lifetime 05:15
+[07.27 10:29:03] chrome.exe *64 - sync.outbrain.com:80 close, 1896 bytes (1.85 KB) sent, 1064 bytes (1.03 KB) received, lifetime 05:17
+[07.27 10:29:03] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.27 10:29:03] chrome.exe *64 - hm2.cnzz.com:80 close, 668 bytes sent, 254 bytes received, lifetime <1 sec
+[07.27 10:29:16] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
+[07.27 10:29:16] chrome.exe *64 - hm2.cnzz.com:80 close, 668 bytes sent, 254 bytes received, lifetime <1 sec
 [07.27 10:29:25] Dropbox.exe - d.dropbox.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:29:26] chrome.exe *64 - hm2.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:29:26] chrome.exe *64 - hm2.cnzz.com:80 close, 667 bytes sent, 254 bytes received, lifetime <1 sec
@@ -229,27 +243,3 @@
 [07.27 10:32:21] chrome.exe *64 - q1.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:32:21] chrome.exe *64 - cnzz.mmstat.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
 [07.27 10:32:21] chrome.exe *64 - cnzz.mmstat.com:80 close, 656 bytes sent, 579 bytes received, lifetime <1 sec
-[07.27 10:32:21] chrome.exe *64 - pcookie.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:21] chrome.exe *64 - pcookie.cnzz.com:80 close, 458 bytes sent, 419 bytes received, lifetime <1 sec
-[07.27 10:32:21] chrome.exe *64 - pcookie.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:22] chrome.exe *64 - nos.netease.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:22] chrome.exe *64 - ssl.google-analytics.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:22] chrome.exe *64 - ssl.google-analytics.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:22] chrome.exe *64 - ssl.google-analytics.com:443 close, 743 bytes sent, 160 bytes received, lifetime <1 sec
-[07.27 10:32:22] chrome.exe *64 - ssl.google-analytics.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:23] chrome.exe *64 - play.google.com:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:23] chrome.exe *64 - easyread.nosdn.127.net:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:23] chrome.exe *64 - easyread.nosdn.127.net:443 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:26] chrome.exe *64 - c.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:26] chrome.exe *64 - c.cnzz.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS
-[07.27 10:32:28] chrome.exe *64 - manhua.163.com:443 close, 8544 bytes (8.34 KB) sent, 102059 bytes (99.6 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - manhua.163.com:443 close, 13838 bytes (13.5 KB) sent, 279218 bytes (272 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - manhua.163.com:443 close, 10268 bytes (10.0 KB) sent, 100125 bytes (97.7 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - manhua.163.com:443 close, 11482 bytes (11.2 KB) sent, 11469 bytes (11.2 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - nos.netease.com:443 close, 4270 bytes (4.16 KB) sent, 411110 bytes (401 KB) received, lifetime 00:06
-[07.27 10:32:28] chrome.exe *64 - nos.netease.com:443 close, 4964 bytes (4.84 KB) sent, 866282 bytes (845 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - nos.netease.com:443 close, 3657 bytes (3.57 KB) sent, 409243 bytes (399 KB) received, lifetime 00:08
-[07.27 10:32:28] chrome.exe *64 - nos.netease.com:443 close, 5579 bytes (5.44 KB) sent, 778846 bytes (760 KB) received, lifetime 00:08
-[07.27 10:32:29] chrome.exe *64 - manhua.163.com:443 close, 16315 bytes (15.9 KB) sent, 16055 bytes (15.6 KB) received, lifetime 00:09
-[07.27 10:32:29] chrome.exe *64 - manhua.163.com:443 close, 11971 bytes (11.6 KB) sent, 18220 bytes (17.7 KB) received, lifetime 00:09
-[07.27 10:32:36] chrome.exe *64 - pcookie.cnzz.com:80 close, 0 bytes sent, 0 bytes received, lifetime 00:15

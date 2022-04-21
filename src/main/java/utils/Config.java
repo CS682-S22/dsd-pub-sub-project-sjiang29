@@ -8,23 +8,21 @@ import java.util.HashMap;
 
 public class Config {
 
-    // host1, run on "mcvm011.cs.usfca.edu" , port: 1851
-    public static HostInfo broker0 = new HostInfo("broker0", "mcvm010.cs.usfca.edu", 1860, 1);
-    public static HostInfo broker1 = new HostInfo("broker1", "mcvm011.cs.usfca.edu", 1851, 6);
-    public static HostInfo broker2 = new HostInfo("broker2", "mcvm012.cs.usfca.edu", 1852, 7);
-    public static HostInfo broker3 = new HostInfo("broker3", "mcvm013.cs.usfca.edu", 1853, 8);
-    public static HostInfo broker4 = new HostInfo("broker4", "mcvm014.cs.usfca.edu", 1854, 9);
-    public static HostInfo broker5 = new HostInfo("broker5", "mcvm015.cs.usfca.edu", 1855, 10);
+    // hosts
+    public static HostInfo broker0 = new HostInfo("broker0", "localhost", 1860, 1);
+    public static HostInfo broker1 = new HostInfo("broker1", "localhost", 1851, 6);
+    public static HostInfo broker2 = new HostInfo("broker2", "localhost", 1852, 7);
+    public static HostInfo broker3 = new HostInfo("broker3", "localhost", 1853, 8);
+    public static HostInfo broker4 = new HostInfo("broker4", "localhost", 1854, 9);
+    public static HostInfo broker5 = new HostInfo("broker5", "localhost", 1855, 10);
 
+    public static HostInfo producer1 = new HostInfo("producer1", "localhost",1856, 0);
+    public static HostInfo producer2 = new HostInfo("producer2", "localhost",1857, 0);
 
-    // host2, run on "mcvm012.cs.usfca.edu" , port: 1852
-    public static HostInfo producer1 = new HostInfo("producer1", "mcvm016.cs.usfca.edu",1856, 0);
-    public static HostInfo producer2 = new HostInfo("producer2", "mcvm017.cs.usfca.edu",1857, 0);
+    public static HostInfo consumer1 = new HostInfo("consumer1", "localhost",1858, 0);
+    public static HostInfo consumer2 = new HostInfo("consumer2", "localhost",1859, 0);
 
-    public static HostInfo consumer1 = new HostInfo("consumer1", "mcvm018.cs.usfca.edu",1858, 0);
-    public static HostInfo consumer2 = new HostInfo("consumer2", "mcvm019.cs.usfca.edu",1859, 0);
-
-    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "mcvm020.cs.usfca.edu",1860, 0);
+    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "localhost",1860, 0);
 
 
     // HashMap for looking for a host information using its name
@@ -35,7 +33,7 @@ public class Config {
         put(loadBalancer.getHostName(), loadBalancer);
     }};
 
-    //
+
     public static final HashMap<Integer, HostInfo> brokerList = new HashMap<Integer, HostInfo>()
     {{ put(broker1.getId(), broker1); put(broker2.getId(), broker2); put(broker3.getId(), broker3);
         put(broker4.getId(), broker4); put(broker5.getId(), broker5);
@@ -44,14 +42,13 @@ public class Config {
     public static final int leaderId = 10;
 
 
-
-    //
+    //map host name with its id
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
-        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
+        put("broker0", 1); put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
     }};
-    public static final String publishedFile1 = "proxifier1.log";
-    public static final String publishedFile2 = "proxifier2.log";
-    public static final String publishedFile3 = "zookeeper1.log";
+    public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
+    public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";
+    public static final String publishedFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/zookeeper1.log";
     // Hashmap to map producer with its published file
     public static final HashMap<String, String> producerAndFile = new HashMap<>(){{
         put(producer1.getHostName(), publishedFile1); put(producer2.getHostName(), publishedFile3);
@@ -71,9 +68,9 @@ public class Config {
 
 
 
-    public static final String writtenFile1 = "consumer1.txt";
-    public static final String writtenFile2 = "consumer2.txt";
-    public static final String writtenFile3 = "consumer3.txt";
+    public static final String writtenFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer1.txt";
+    public static final String writtenFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer2.txt";
+    public static final String writtenFile3 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/consumer3.txt";
     // HashMap to map consumer with its written file
     public static final HashMap<String, String> consumerAndFile = new HashMap<>(){{
         put(consumer1.getHostName(), writtenFile1); put(consumer2.getHostName(), writtenFile2);
