@@ -9,11 +9,14 @@ import java.util.HashMap;
 public class Config {
 
     // host1, run on "mcvm011.cs.usfca.edu" , port: 1851
-    public static HostInfo broker1 = new HostInfo("newbroker1", "localhost", 1851, 6);
+    public static HostInfo broker0 = new HostInfo("broker0", "localhost", 1860, 1);
+    public static HostInfo broker1 = new HostInfo("broker1", "localhost", 1851, 6);
     public static HostInfo broker2 = new HostInfo("broker2", "localhost", 1852, 7);
     public static HostInfo broker3 = new HostInfo("broker3", "localhost", 1853, 8);
     public static HostInfo broker4 = new HostInfo("broker4", "localhost", 1854, 9);
     public static HostInfo broker5 = new HostInfo("broker5", "localhost", 1855, 10);
+
+
     // host2, run on "mcvm012.cs.usfca.edu" , port: 1852
     public static HostInfo producer1 = new HostInfo("producer1", "localhost",1856, 0);
     public static HostInfo producer2 = new HostInfo("producer2", "localhost",1857, 0);
@@ -26,7 +29,7 @@ public class Config {
 
     // HashMap for looking for a host information using its name
     public static final HashMap<String, HostInfo> hostList = new HashMap<String, HostInfo>()
-    {{ put(broker1.getHostName(), broker1); put(broker2.getHostName(), broker2); put(broker3.getHostName(), broker3);
+    {{ put(broker0.getHostName(), broker0); put(broker1.getHostName(), broker1); put(broker2.getHostName(), broker2); put(broker3.getHostName(), broker3);
         put(broker4.getHostName(), broker4); put(broker5.getHostName(), broker5); put(producer1.getHostName(), producer1);
         put(producer2.getHostName(), producer2); put(consumer1.getHostName(), consumer1); put(consumer2.getHostName(), consumer2);
         put(loadBalancer.getHostName(), loadBalancer);
@@ -44,7 +47,7 @@ public class Config {
 
     //
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
-        put("newbroker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
+        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
     }};
     public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
     public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";
