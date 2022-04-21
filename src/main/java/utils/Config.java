@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Config {
 
     // host1, run on "mcvm011.cs.usfca.edu" , port: 1851
-    public static HostInfo broker1 = new HostInfo("broker1", "localhost", 1851, 6);
+    public static HostInfo broker1 = new HostInfo("newbroker1", "localhost", 1851, 6);
     public static HostInfo broker2 = new HostInfo("broker2", "localhost", 1852, 7);
     public static HostInfo broker3 = new HostInfo("broker3", "localhost", 1853, 8);
     public static HostInfo broker4 = new HostInfo("broker4", "localhost", 1854, 9);
@@ -44,7 +44,7 @@ public class Config {
 
     //
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
-        put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
+        put("newbroker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
     }};
     public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
     public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";

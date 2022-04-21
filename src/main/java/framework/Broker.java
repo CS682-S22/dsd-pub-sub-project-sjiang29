@@ -31,8 +31,9 @@ public class Broker {
     private ServerSocket server;
     private int brokerPort;
 
-    private volatile int numOfSync = 0;
+
     private volatile boolean isRunning;
+    private volatile boolean isSync;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
     private CopyOnWriteArrayList<String> dataVersions;
@@ -71,6 +72,7 @@ public class Broker {
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,8000000000L,
                 this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 8000);
         this.isRunning = true;
+        this.isSync = false;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
             //starting broker server
@@ -111,6 +113,21 @@ public class Broker {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void connectToBroker(String connectedBrokerAddress, int connectedBrokerPort,
+                                 int connectedBrokerId,String connectedBrokerName){
+        Socket socket = null;
+        try {
+            socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
+            Connection connection = new Connection(socket);
+            this.brokerConnections.put(connectedBrokerName, connection);
+            this.membership.markAlive(connectedBrokerId);
+        } catch (IOException e) {
+            connectToBroker(connectedBrokerAddress, connectedBrokerPort, connectedBrokerId, connectedBrokerName);
+            e.printStackTrace();
+        }
+
     }
 
     public void sendHb() {
@@ -244,7 +261,8 @@ public class Broker {
 
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
-                    type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy") || type.equals("earliestDataVersion");
+                    type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
+                    || type.equals("earliestDataVersion") || type.equals("sync");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -366,6 +384,28 @@ public class Broker {
 
         }
 
+        private void syncToNewFollower(){
+            isSync = true;
+            if(isSync){
+                for(String topic : msgLists.keySet()){
+                    CopyOnWriteArrayList<MsgInfo.Msg> list = msgLists.get(topic);
+                    int msgCount = list.size();
+                    int i = 0;
+                    while(i < msgCount){
+                        MsgInfo.Msg msg = list.get(i);
+                        MsgInfo.Msg syncMsg = MsgInfo.Msg.newBuilder().setType("sync").setTopic(topic).setSenderName(brokerName).
+                                setContent(msg.getContent()).build();
+                        this.connection.send(syncMsg.toByteArray());
+                    }
+                }
+            }
+            isSync = false;
+        }
+
+        private void deadSyncMsg(MsgInfo.Msg receivedMsg){
+            dealCopy(receivedMsg);
+        }
+
         private void dealBrokerReq(MsgInfo.Msg receivedMsg, Connection connection){
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
@@ -376,6 +416,12 @@ public class Broker {
                 //logger.info("broker line 336: mark time + " + id + currentTime);
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
+                if(senderName.contains("new") && isLeader()){
+                    Thread t = new Thread(() -> syncToNewFollower());
+                    t.start();
+                }
+            } else if (type.equals("sync") && brokerName.contains("new")) {
+                deadSyncMsg(receivedMsg);
             } else if (type.equals("coordinator")){
                 //Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
