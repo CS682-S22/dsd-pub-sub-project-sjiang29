@@ -49,7 +49,7 @@ public class Server {
         return connection;
     }
 
-    public static String buildReplyToNewLeader(ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
+    public static String buildDataVersion(ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
         StringBuilder sb = new StringBuilder();
         String topic1 = Config.topic1;
         String topic2 = Config.topic2;

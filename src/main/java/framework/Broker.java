@@ -375,6 +375,10 @@ public class Broker {
                 Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
+                String dataVersion = Server.buildDataVersion(msgLists);
+                MsgInfo.Msg dataVersionMsg = MsgInfo.Msg.newBuilder().setType("dataVersion").setDataVersion(dataVersion).setSenderName(brokerName).build();
+                this.connection.send(dataVersionMsg.toByteArray());
+
             } else if (type.equals("election")){
                 Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer);

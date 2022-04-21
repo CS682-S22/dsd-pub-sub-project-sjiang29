@@ -176,7 +176,7 @@ public class AutoTests {
     @Test
     public void checkBuildReplyToNewLeader1(){
         ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
-        String s = Server.buildReplyToNewLeader(msgLists);
+        String s = Server.buildDataVersion(msgLists);
         String predicted = Config.topic1 + ":" + "0" + ";" + Config.topic2 + ":" + "0";
         Assertions.assertEquals(s, predicted);
     }
@@ -193,7 +193,7 @@ public class AutoTests {
         l2.add(msg2);
         msgLists.put(Config.topic1, l1);
         msgLists.put(Config.topic2, l2);
-        String s = Server.buildReplyToNewLeader(msgLists);
+        String s = Server.buildDataVersion(msgLists);
         String predicted = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
         Assertions.assertEquals(s, predicted);
     }

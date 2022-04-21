@@ -95,16 +95,16 @@ public final class MsgInfo {
     int getLeaderId();
 
     /**
-     * <code>string reply = 11;</code>
-     * @return The reply.
+     * <code>string dataVersion = 11;</code>
+     * @return The dataVersion.
      */
-    java.lang.String getReply();
+    java.lang.String getDataVersion();
     /**
-     * <code>string reply = 11;</code>
-     * @return The bytes for reply.
+     * <code>string dataVersion = 11;</code>
+     * @return The bytes for dataVersion.
      */
     com.google.protobuf.ByteString
-        getReplyBytes();
+        getDataVersionBytes();
   }
   /**
    * Protobuf type {@code Msg}
@@ -123,7 +123,7 @@ public final class MsgInfo {
       content_ = com.google.protobuf.ByteString.EMPTY;
       senderName_ = "";
       type_ = "";
-      reply_ = "";
+      dataVersion_ = "";
     }
 
     @java.lang.Override
@@ -212,7 +212,7 @@ public final class MsgInfo {
             case 90: {
               java.lang.String s = input.readStringRequireUtf8();
 
-              reply_ = s;
+              dataVersion_ = s;
               break;
             }
             default: {
@@ -438,38 +438,38 @@ public final class MsgInfo {
       return leaderId_;
     }
 
-    public static final int REPLY_FIELD_NUMBER = 11;
-    private volatile java.lang.Object reply_;
+    public static final int DATAVERSION_FIELD_NUMBER = 11;
+    private volatile java.lang.Object dataVersion_;
     /**
-     * <code>string reply = 11;</code>
-     * @return The reply.
+     * <code>string dataVersion = 11;</code>
+     * @return The dataVersion.
      */
     @java.lang.Override
-    public java.lang.String getReply() {
-      java.lang.Object ref = reply_;
+    public java.lang.String getDataVersion() {
+      java.lang.Object ref = dataVersion_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        reply_ = s;
+        dataVersion_ = s;
         return s;
       }
     }
     /**
-     * <code>string reply = 11;</code>
-     * @return The bytes for reply.
+     * <code>string dataVersion = 11;</code>
+     * @return The bytes for dataVersion.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getReplyBytes() {
-      java.lang.Object ref = reply_;
+        getDataVersionBytes() {
+      java.lang.Object ref = dataVersion_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        reply_ = b;
+        dataVersion_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -520,8 +520,8 @@ public final class MsgInfo {
       if (leaderId_ != 0) {
         output.writeInt32(10, leaderId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reply_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 11, reply_);
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(dataVersion_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 11, dataVersion_);
       }
       unknownFields.writeTo(output);
     }
@@ -569,8 +569,8 @@ public final class MsgInfo {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(10, leaderId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reply_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, reply_);
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(dataVersion_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, dataVersion_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -607,8 +607,8 @@ public final class MsgInfo {
           != other.getCopyNum()) return false;
       if (getLeaderId()
           != other.getLeaderId()) return false;
-      if (!getReply()
-          .equals(other.getReply())) return false;
+      if (!getDataVersion()
+          .equals(other.getDataVersion())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -640,8 +640,8 @@ public final class MsgInfo {
       hash = (53 * hash) + getCopyNum();
       hash = (37 * hash) + LEADERID_FIELD_NUMBER;
       hash = (53 * hash) + getLeaderId();
-      hash = (37 * hash) + REPLY_FIELD_NUMBER;
-      hash = (53 * hash) + getReply().hashCode();
+      hash = (37 * hash) + DATAVERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getDataVersion().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -795,7 +795,7 @@ public final class MsgInfo {
 
         leaderId_ = 0;
 
-        reply_ = "";
+        dataVersion_ = "";
 
         return this;
       }
@@ -833,7 +833,7 @@ public final class MsgInfo {
         result.requiredMsgCount_ = requiredMsgCount_;
         result.copyNum_ = copyNum_;
         result.leaderId_ = leaderId_;
-        result.reply_ = reply_;
+        result.dataVersion_ = dataVersion_;
         onBuilt();
         return result;
       }
@@ -915,8 +915,8 @@ public final class MsgInfo {
         if (other.getLeaderId() != 0) {
           setLeaderId(other.getLeaderId());
         }
-        if (!other.getReply().isEmpty()) {
-          reply_ = other.reply_;
+        if (!other.getDataVersion().isEmpty()) {
+          dataVersion_ = other.dataVersion_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -1396,78 +1396,78 @@ public final class MsgInfo {
         return this;
       }
 
-      private java.lang.Object reply_ = "";
+      private java.lang.Object dataVersion_ = "";
       /**
-       * <code>string reply = 11;</code>
-       * @return The reply.
+       * <code>string dataVersion = 11;</code>
+       * @return The dataVersion.
        */
-      public java.lang.String getReply() {
-        java.lang.Object ref = reply_;
+      public java.lang.String getDataVersion() {
+        java.lang.Object ref = dataVersion_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          reply_ = s;
+          dataVersion_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string reply = 11;</code>
-       * @return The bytes for reply.
+       * <code>string dataVersion = 11;</code>
+       * @return The bytes for dataVersion.
        */
       public com.google.protobuf.ByteString
-          getReplyBytes() {
-        java.lang.Object ref = reply_;
+          getDataVersionBytes() {
+        java.lang.Object ref = dataVersion_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          reply_ = b;
+          dataVersion_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string reply = 11;</code>
-       * @param value The reply to set.
+       * <code>string dataVersion = 11;</code>
+       * @param value The dataVersion to set.
        * @return This builder for chaining.
        */
-      public Builder setReply(
+      public Builder setDataVersion(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   
-        reply_ = value;
+        dataVersion_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>string reply = 11;</code>
+       * <code>string dataVersion = 11;</code>
        * @return This builder for chaining.
        */
-      public Builder clearReply() {
+      public Builder clearDataVersion() {
         
-        reply_ = getDefaultInstance().getReply();
+        dataVersion_ = getDefaultInstance().getDataVersion();
         onChanged();
         return this;
       }
       /**
-       * <code>string reply = 11;</code>
-       * @param value The bytes for reply to set.
+       * <code>string dataVersion = 11;</code>
+       * @param value The bytes for dataVersion to set.
        * @return This builder for chaining.
        */
-      public Builder setReplyBytes(
+      public Builder setDataVersionBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
         
-        reply_ = value;
+        dataVersion_ = value;
         onChanged();
         return this;
       }
@@ -1538,12 +1538,13 @@ public final class MsgInfo {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\tmsg.proto\"\313\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
+      "\n\tmsg.proto\"\321\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
       "\030\002 \001(\t\022\017\n\007content\030\003 \001(\014\022\022\n\nsenderName\030\004 " +
       "\001(\t\022\020\n\010senderId\030\005 \001(\005\022\014\n\004type\030\006 \001(\t\022\030\n\020s" +
       "tartingPosition\030\007 \001(\005\022\030\n\020requiredMsgCoun" +
       "t\030\010 \001(\005\022\017\n\007copyNum\030\t \001(\005\022\020\n\010leaderId\030\n \001" +
-      "(\005\022\r\n\005reply\030\013 \001(\tB\tB\007MsgInfob\006proto3"
+      "(\005\022\023\n\013dataVersion\030\013 \001(\tB\tB\007MsgInfob\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1554,7 +1555,7 @@ public final class MsgInfo {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", "LeaderId", "Reply", });
+        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", "LeaderId", "DataVersion", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
