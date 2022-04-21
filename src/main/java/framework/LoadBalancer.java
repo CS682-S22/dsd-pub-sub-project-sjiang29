@@ -49,7 +49,6 @@ public class LoadBalancer {
             Thread connectionHandler = new Thread(new LoadBalancer.ConnectionHandler(connection));
             connectionHandler.start();
         }
-
     }
 
 
@@ -86,7 +85,6 @@ public class LoadBalancer {
                     e.printStackTrace();
                 }
             }
-
         }
 
         /**
@@ -110,7 +108,6 @@ public class LoadBalancer {
                     Connection connection = connections.get(receiver);
                     connection.send(coordinatorMsg.toByteArray());
                 }
-
             }
         }
     }

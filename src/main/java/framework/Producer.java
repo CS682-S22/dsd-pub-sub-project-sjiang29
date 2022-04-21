@@ -53,7 +53,6 @@ public class Producer {
         try {
             Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
             this.leaderBrokerConnection = new Connection(socket);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -93,7 +92,6 @@ public class Producer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 
@@ -150,6 +148,5 @@ public class Producer {
         }
         return false;
     }
-
 
 }

@@ -64,7 +64,6 @@ public class Consumer implements Runnable {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 
             if(receivedMsg.getType().equals("coordinator")){
-
                 int newLeaderId = receivedMsg.getLeaderId();
                 this.leaderBrokerId = newLeaderId;
                 logger.info("consumer line 70: new leader is promoted, new leader: " + newLeaderId);
@@ -73,7 +72,6 @@ public class Consumer implements Runnable {
                 this.leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
                 Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
                 this.leaderBrokerConnection = new Connection(socket);
-
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,8 +165,6 @@ public class Consumer implements Runnable {
             updateLeaderBrokerConnection();
             run();
         }
-
-
     }
 
 

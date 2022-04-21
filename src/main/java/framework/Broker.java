@@ -343,7 +343,6 @@ public class Broker {
                     this.connection.send(rejectPubMsg.toByteArray());
                 }
 
-
             }
         }
 
@@ -391,7 +390,6 @@ public class Broker {
                 String dataVersion = Server.buildDataVersion(msgLists);
                 MsgInfo.Msg dataVersionMsg = MsgInfo.Msg.newBuilder().setType("dataVersion").setDataVersion(dataVersion).setSenderName(brokerName).build();
                 this.connection.send(dataVersionMsg.toByteArray());
-
             } else if(type.equals("dataVersion")) {
                 Broker.isElecting = false;
                 String currentBrokerDv = Server.buildDataVersion(msgLists);
@@ -401,7 +399,6 @@ public class Broker {
                 String earliestDV = Server.pickEarliestDataVersion(dataVersions);
                 dealEarliestDataVersion(earliestDV);
                 sendEarliestToFollowers(earliestDV);
-
             } else if(type.equals("earliestDataVersion")) {
                 String earliestDV = receivedMsg.getDataVersion();
                 dealEarliestDataVersion(earliestDV);
@@ -419,13 +416,11 @@ public class Broker {
                 Connection conn = brokerConnections.get(senderName);
                 conn.send(successfulCopyMsg.toByteArray());
                 logger.info("broker line 369 : copy successful " );
-
             } else if(type.equals("successfulCopy")){
                 String copiedTopic = receivedMsg.getTopic();
                 logger.info("broker line 357: receive successful from + " + senderName);
                 String producerName = topicToClient.get(copiedTopic);
                 copyStatuses.get(producerName).incrementSuccessCopy();
-
             }
 
         }
@@ -471,7 +466,6 @@ public class Broker {
                 messages = new CopyOnWriteArrayList<>();
             }
             messages.add(receivedMsg);
-
             msgLists.put(publishedTopic, messages);
         }
 
