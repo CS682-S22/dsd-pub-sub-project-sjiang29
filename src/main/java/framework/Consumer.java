@@ -101,9 +101,12 @@ public class Consumer implements Runnable {
         while(isReceiving){
             byte[] receivedBytes = this.leaderBrokerConnection.receive();
             if (receivedBytes == null){
+                logger.info("consumer line 104: reconnect");
                 updateLeaderBrokerConnection();
+                this.sendRequest(this.startingPosition);
+                receivedBytes = this.leaderBrokerConnection.receive();
             }
-            receivedBytes = this.leaderBrokerConnection.receive();
+            //receivedBytes = this.leaderBrokerConnection.receive();
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                 if(receivedMsg.getType().equals("unavailable")){
@@ -156,6 +159,7 @@ public class Consumer implements Runnable {
             this.startingPosition = this.startingPosition + receivedMsgCount;
         }
         if(!this.leaderBrokerConnection.isOpen()){
+            logger.info("consumer line 160: reconnect");
             updateLeaderBrokerConnection();
             run();
         }
