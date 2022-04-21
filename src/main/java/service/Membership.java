@@ -9,63 +9,77 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+
+/**
+ * Membership: class to store live brokers connected with current broker
+ */
 public class Membership {
-    //private HashMap<String, Integer> nameToIdMap;
-    //private HashMap<Integer, String> idToNameMap;
+
     private ConcurrentHashMap<Integer, Boolean> members;
     private volatile int leaderId;
 
 
-    public Membership(ConcurrentHashMap<Integer, Boolean> members, int leaderId) {
-        //this.nameToIdMap = nameToIdMap;
-        //this.idToNameMap = idToNameMap;
-        this.members = members;
-        this.leaderId = leaderId;
-    }
-
+    /**
+     * Constructor
+     */
     public Membership(){
         this.members = new ConcurrentHashMap<Integer, Boolean>();
         this.leaderId = Config.leaderId;
     }
 
+    /**
+     * Getter to get leader id
+     * @return
+     */
     synchronized public int getLeaderId() {
         return this.leaderId;
     }
 
+    /**
+     * Setter to get leader id
+     * @param leaderId
+     */
     synchronized public void setLeaderId(int leaderId) {
         this.leaderId = leaderId;
     }
 
+    /**
+     * Helper to add some live broker to members
+     * @param id
+     */
     public void markAlive(int id){
         this.members.put(id, true);
     }
+
+    /**
+     * Helper to return all live member
+     * @return
+     */
     public Set<Integer> getAllMembers() {
-
-
         return this.members.keySet();
     }
 
-
+    /**
+     * Helper to remove some live broker from members
+     * @param id
+     */
     public void markDown(int id){
         this.members.remove(id);
     }
 
+    /**
+     * Helper to print all live members
+     */
     public void printLiveMembers(){
         String s = this.members.keySet().toString();
         System.out.println("live members:" + s);
     }
 
 
-//    public int getMaxLiveId() {
-//        int res = Integer.MIN_VALUE;
-//        for(int i: this.members.keySet()){
-//            if(res < i && this.members.get(i)){
-//                res = i;
-//            }
-//        }
-//        return res;
-//    }
-
+    /**
+     * Helper to get list of followers of some broker
+     * @param id
+     */
     public ArrayList<Integer> getFollowers(int id){
         ArrayList<Integer> followers = new ArrayList<>();
         for(int i : this.members.keySet()){

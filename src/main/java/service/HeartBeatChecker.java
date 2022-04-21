@@ -15,7 +15,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static framework.Broker.logger;
 
 
-
+/**
+ * HeartBeatChecker: runnable class to check heart beat received time  to determine the live status of a broker
+ */
 public class HeartBeatChecker implements Runnable {
     private String hostBrokerName;
     private ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes;
@@ -25,7 +27,16 @@ public class HeartBeatChecker implements Runnable {
     private Connection connectionToLoadBalancer;
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
 
-
+    /**
+     * Constructor
+     * @param msgLists
+     * @param membership
+     * @param hostBrokerName
+     * @param connectionToLoadBalancer
+     * @param brokerConnections
+     * @param heartBeatReceivedTimes
+     * @param timeoutNanos
+     */
     public HeartBeatChecker(String hostBrokerName,
                             ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes,
                             long timeoutNanos, Membership membership,
@@ -41,6 +52,9 @@ public class HeartBeatChecker implements Runnable {
         this.msgLists = msgLists;
     }
 
+    /**
+     * Runnable interface methos
+     */
     @Override
     public void run() {
         Long now = System.nanoTime();
@@ -64,8 +78,7 @@ public class HeartBeatChecker implements Runnable {
                     if (newLeaderId != -1) {
                         Broker.isElecting = false;
                         this.membership.setLeaderId(newLeaderId);
-                        //logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
-                        //connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
+
                     }
                 }
             }

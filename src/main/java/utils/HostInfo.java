@@ -14,6 +14,8 @@ public class HostInfo {
      * @param hostName
      * @param hostAddress
      * @param port
+     * @param id
+     *
      */
     public HostInfo(String hostName, String hostAddress, int port, int id) {
         this.hostName = hostName;
@@ -46,6 +48,10 @@ public class HostInfo {
         return this.port;
     }
 
+    /**
+     * Getter to get id
+     * @return
+     */
     public int getId() {
         return this.id;
     }
