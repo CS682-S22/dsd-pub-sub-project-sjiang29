@@ -89,8 +89,12 @@ public class Consumer implements Runnable {
         int requiredMsgCount = 20;
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("subscribe").setTopic(this.topic).setSenderName(this.consumerName)
                 .setStartingPosition(startingPoint).setRequiredMsgCount(requiredMsgCount).build();
-        logger.info("send request to:" + this.leaderBrokerId);
-        this.leaderBrokerConnection.send(requestMsg.toByteArray());
+        logger.info("line 92 send request to:" + this.leaderBrokerId);
+        boolean sendingStatus = this.leaderBrokerConnection.send(requestMsg.toByteArray());
+        if(sendingStatus == false) {
+            updateLeaderBrokerConnection();
+            this.leaderBrokerConnection.send(requestMsg.toByteArray());
+        }
     }
 
     /**

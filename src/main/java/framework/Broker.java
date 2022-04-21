@@ -258,27 +258,32 @@ public class Broker {
             int requiredMsgCount = receivedMsg.getRequiredMsgCount();
             logger.info("broker line 133: subscribedTopic: " + subscribedTopic);
 
-            CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-            if(requiredMsgList == null){
+            if(isElecting == true) {
                 MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
                 this.connection.send(responseMsg.toByteArray());
-            }else{
-                // send Msg one by one
-                MsgInfo.Msg requiredMsg;
-                int endPoint;
-                if(requiredMsgList.size() > startingPosition + requiredMsgCount){
-                    endPoint = startingPosition + requiredMsgCount;
-                } else {
-                    endPoint = requiredMsgList.size();
+            } else {
+                CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
+                if(requiredMsgList == null){
+
+                }else{
+                    // send Msg one by one
+                    MsgInfo.Msg requiredMsg;
+                    int endPoint;
+                    if(requiredMsgList.size() > startingPosition + requiredMsgCount){
+                        endPoint = startingPosition + requiredMsgCount;
+                    } else {
+                        endPoint = requiredMsgList.size();
+                    }
+                    for(int i = startingPosition; i < endPoint; i++){
+                        requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
+                        logger.info("broker 144, response msg : " + new String(requiredMsg.getContent().toByteArray()));
+                        this.connection.send(requiredMsg.toByteArray());
+                    }
+                    MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
+                    this.connection.send(stopMsg.toByteArray());
                 }
-                for(int i = startingPosition; i < endPoint; i++){
-                    requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                    logger.info("broker 144, response msg : " + new String(requiredMsg.getContent().toByteArray()));
-                    this.connection.send(requiredMsg.toByteArray());
-                }
-                MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
-                this.connection.send(stopMsg.toByteArray());
             }
+
         }
 
         /**

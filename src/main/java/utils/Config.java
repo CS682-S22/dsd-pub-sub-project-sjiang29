@@ -13,7 +13,7 @@ public class Config {
     public static HostInfo broker2 = new HostInfo("broker2", "localhost", 1852, 7);
     public static HostInfo broker3 = new HostInfo("broker3", "localhost", 1853, 8);
     public static HostInfo broker4 = new HostInfo("broker4", "localhost", 1854, 9);
-    public static HostInfo broker5 = new HostInfo("newbroker5", "localhost", 1855, 10);
+    public static HostInfo broker5 = new HostInfo("broker5", "localhost", 1855, 10);
     // host2, run on "mcvm012.cs.usfca.edu" , port: 1852
     public static HostInfo producer1 = new HostInfo("producer1", "localhost",1856, 0);
     public static HostInfo producer2 = new HostInfo("producer2", "localhost",1857, 0);
