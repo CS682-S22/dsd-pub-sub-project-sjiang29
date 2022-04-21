@@ -63,7 +63,7 @@ public class Server {
             num2 = msgLists.get(topic2).size();
         }
 
-        sb.append(topic1).append(":").append(num1).append(";").append(topic1).append(":").append(num2);
+        sb.append(topic1).append(":").append(num1).append(";").append(topic2).append(":").append(num2);
         return sb.toString();
     }
 

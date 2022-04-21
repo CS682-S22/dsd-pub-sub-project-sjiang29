@@ -1,127 +1,136 @@
 import com.google.protobuf.ByteString;
 import framework.Broker;
 import framework.Producer;
+import framework.Server;
 import network.Connection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import proto.MsgInfo;
+import service.BullyAlgo;
+import service.Membership;
 import utils.Config;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static utils.Utility.getCheckSum;
 
 public class AutoTests {
 
-    /**
-     * Test protobuff handles msg correctly
-     *
-     */
     @Test
-    public void testProtoBuff1(){
-        String msg = "hello";
-        byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setContent(ByteString.copyFrom(msgBytes)).build();
-        byte[] receivedBytes = sentMsg.getContent().toByteArray();
-        Assertions.assertEquals(new String(msgBytes), new String(receivedBytes));
-    }
+    public void testBully1() {
+        try {
+            ServerSocket server = new ServerSocket(8000);
+            Socket s1 = new Socket("localhost", 8000);
+            Socket s2 = new Socket("localhost", 8000);
+            Socket s3 = new Socket("localhost", 8000);
+            Membership membership = new Membership();
+            membership.setLeaderId(Config.leaderId);
+            membership.markAlive(9);
+            membership.markAlive(8);
+            String hostBrokerName = "broker5";
+            ConcurrentHashMap<String, Connection> brokerConnections = new ConcurrentHashMap<>();
 
-    /**
-     * Test protobuff handles msg correctly
-     *
-     */
-    @Test
-    public void testProtoBuff2(){
-        String msg = "hello";
-        byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        MsgInfo.Msg sentMsg = MsgInfo.Msg.newBuilder().setContent(ByteString.copyFrom(msgBytes)).build();
-        // String.valueOf doesn't work properly here
-        String sentContent = String.valueOf(sentMsg.getContent());
-        Assertions.assertNotEquals(msg, sentContent);
-    }
+            brokerConnections.put("broker4", new Connection(s1));
+            brokerConnections.put("broker3", new Connection(s2));
+            Connection connectionToLoadBalancer = new Connection(s3);
 
-    /**
-     * Test method to write to a file is correct
-     *
-     */
-    @Test
-    public void testWriteToFile(){
-        String sentFilePath = "sent.txt";
-        String receivedFilePath = "received.txt";
-        PrintWriter pw = null;
-
-        try (FileInputStream fileInputStream = new FileInputStream(sentFilePath);
-             BufferedReader br = new BufferedReader(new InputStreamReader(fileInputStream, StandardCharsets.ISO_8859_1))) {
-            String line;
-
-            FileWriter fileWriter = new FileWriter(receivedFilePath);
-            pw = new PrintWriter(fileWriter);
-
-            while ((line = br.readLine()) != null) {
-                pw.println(line);
-            }
-            pw.flush();
-
-        }catch (FileNotFoundException e) {
-            System.out.println("File does not exist!");
+            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer);
+            Assertions.assertEquals(newLeader, 10);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if(pw != null){
-                pw.close();
-            }
-            Assertions.assertEquals(getCheckSum(sentFilePath), getCheckSum(receivedFilePath));
         }
     }
 
-    /**
-     * Test broker is set correctly
-     *
-     */
     @Test
-    public void testBroker1(){
-        Broker broker = new Broker("broker");
-        Assertions.assertEquals(broker.getBrokerPort(), Config.hostList.get("broker").getPort());
-    }
+    public void testBully2() {
+        try {
+            ServerSocket server = new ServerSocket(8000);
+            Socket s1 = new Socket("localhost", 8000);
+            Socket s2 = new Socket("localhost", 8000);
+            Socket s3 = new Socket("localhost", 8000);
+            Membership membership = new Membership();
+            membership.setLeaderId(7);
+            membership.markAlive(9);
+            membership.markAlive(8);
+            String hostBrokerName = "broker2";
+            ConcurrentHashMap<String, Connection> brokerConnections = new ConcurrentHashMap<>();
 
-    /**
-     * Test config is set correctly
-     *
-     */
-    @Test
-    public void testConfig1(){
-        Assertions.assertEquals(Config.hostList.size(), 7);
-    }
+            brokerConnections.put("broker4", new Connection(s1));
+            brokerConnections.put("broker3", new Connection(s2));
+            Connection connectionToLoadBalancer = new Connection(s3);
 
-    @Test
-    public void testConfig2(){
-        Assertions.assertEquals(Config.consumerAndFile.get("consumer1"), Config.writtenFile1);
-    }
-
-    @Test
-    public void testConfig3(){
-        Assertions.assertEquals(Config.consumerAndFile.get("consumer2"), Config.writtenFile2);
+            int newLeader = BullyAlgo.sendBullyReq(membership,hostBrokerName,brokerConnections, connectionToLoadBalancer);
+            Assertions.assertEquals(newLeader, -1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
-    public void testConfig4(){
-        Assertions.assertEquals(Config.consumerAndFile.get("consumer3"), Config.writtenFile3);
+    public void testMembership1(){
+        Membership membership = new Membership();
+        membership.markAlive(1);
+        membership.markAlive(2);
+        membership.markDown(1);
+        int members = membership.getAllMembers().size();
+        Assertions.assertEquals(members, 1);
     }
 
     @Test
-    public void testConfig5(){
-        Assertions.assertEquals(Config.consumerAndTopic.get("consumer1"), Config.topic1);
+    public void testMembership2(){
+        Membership membership = new Membership();
+        membership.markAlive(1);
+        membership.markAlive(2);
+        membership.markAlive(3);
+        membership.markAlive(4);
+        membership.markAlive(6);
+        int followers = membership.getFollowers(4).size();
+        Assertions.assertEquals(followers, 3);
     }
 
     @Test
-    public void testConfig6(){
-        Assertions.assertEquals(Config.consumerAndTopic.get("consumer2"), Config.topic1);
+    public void checkBuildReplyToNewLeader1(){
+        ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+        String s = Server.buildReplyToNewLeader(msgLists);
+        String predicted = Config.topic1 + ":" + "0" + ";" + Config.topic2 + ":" + "0";
+        Assertions.assertEquals(s, predicted);
     }
 
     @Test
-    public void testConfig7(){
-        Assertions.assertEquals(Config.consumerAndTopic.get("consumer3"), Config.topic2);
+    public void checkBuildReplyToNewLeader2(){
+        MsgInfo.Msg msg1 = MsgInfo.Msg.newBuilder().setType("test").build();
+        MsgInfo.Msg msg2 = MsgInfo.Msg.newBuilder().setType("test").build();
+        ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists = new ConcurrentHashMap<>();
+        CopyOnWriteArrayList<MsgInfo.Msg> l1 = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<MsgInfo.Msg> l2 = new CopyOnWriteArrayList<>();
+        l1.add(msg1);
+        l2.add(msg1);
+        l2.add(msg2);
+        msgLists.put(Config.topic1, l1);
+        msgLists.put(Config.topic2, l2);
+        String s = Server.buildReplyToNewLeader(msgLists);
+        String predicted = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
+        Assertions.assertEquals(s, predicted);
     }
+
+    @Test
+    public void checkGetTopicNum1(){
+        String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
+        int[] res = Server.getTopicNum(s);
+        Assertions.assertEquals(1, res[0]);
+    }
+
+    @Test
+    public void checkGetTopicNum2(){
+        String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
+        int[] res = Server.getTopicNum(s);
+        Assertions.assertEquals(9, res[1]);
+    }
+
+
 }
