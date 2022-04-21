@@ -41,7 +41,7 @@ public class Broker {
     private ConcurrentHashMap<String, Connection> brokerConnections;
     private Connection connectionToLoadBalancer;
 
-    private Hashtable<Integer, Long> receivedHeartBeatTime;
+    private ConcurrentHashMap<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
     private HeartBeatScheduler failureDetector;
 
@@ -61,7 +61,7 @@ public class Broker {
         this.dataVersions = new CopyOnWriteArrayList<>();
         this.copyStatuses = new ConcurrentHashMap<>();
         this.topicToClient = new ConcurrentHashMap<>();
-        this.receivedHeartBeatTime = new Hashtable<>();
+        this.receivedHeartBeatTime = new ConcurrentHashMap<>();
         this.membership = new Membership();
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();

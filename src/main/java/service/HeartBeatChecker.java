@@ -17,14 +17,14 @@ import static framework.Broker.logger;
 
 public class HeartBeatChecker implements Runnable {
     private String hostBrokerName;
-    private Hashtable<Integer, Long> heartBeatReceivedTimes;
+    private ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes;
     private long timeoutNanos;
     private Membership membership;
     private ConcurrentHashMap<String, Connection> brokerConnections;
     private Connection connectionToLoadBalancer;
 
 
-    public HeartBeatChecker(String hostBrokerName, Hashtable<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
+    public HeartBeatChecker(String hostBrokerName, ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes, long timeoutNanos, Membership membership,
                             ConcurrentHashMap<String, Connection> brokerConnections, Connection connectionToLoadBalancer) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
