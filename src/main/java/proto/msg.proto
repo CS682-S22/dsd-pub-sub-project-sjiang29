@@ -17,6 +17,6 @@ message Msg {
   int32 requiredMsgCount = 8;
   int32 copyNum = 9;
   int32 leaderId = 10;
-  string reply = 11;
+  string dataVersion = 11;
 
 }

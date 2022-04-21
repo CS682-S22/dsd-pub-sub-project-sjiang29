@@ -1,5 +1,7 @@
 package service;
 
+import framework.Broker;
+import framework.Server;
 import network.Connection;
 import proto.MsgInfo;
 import utils.Config;
@@ -15,8 +17,11 @@ import static framework.Broker.logger;
 public class BullyAlgo {
 
     public static int sendBullyReq(Membership membership, String hostBrokerName,
-                                   ConcurrentHashMap<String, Connection> brokerConnections, Connection connectionToLoadBalancer){
+                                   ConcurrentHashMap<String, Connection> brokerConnections,
+                                   Connection connectionToLoadBalancer,
+                                   ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
 
+        Broker.isElecting = true;
         int newLeaderId = -1;
         boolean hasLargerId = false;
         Set<Integer> liveMembersId = membership.getAllMembers();
@@ -33,7 +38,10 @@ public class BullyAlgo {
         if(!hasLargerId){
             //currentBroker will be new leader if there is no other higher broker id
             newLeaderId = hostBrokerId;
-            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setLeaderId(newLeaderId).setSenderName(hostBrokerName).build();
+            Broker.isElecting = false;
+            String dataVersion = Server.buildDataVersion(msgLists);
+            MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setLeaderId(newLeaderId).
+            setDataVersion(dataVersion).setSenderName(hostBrokerName).build();
             for(int i : liveMembersId){
                 String recipientBrokerName = Config.brokerList.get(i).getHostName();
                 logger.info("bully algo line 39: send coordinator msg to + " + recipientBrokerName);
