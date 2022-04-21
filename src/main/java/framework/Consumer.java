@@ -45,9 +45,6 @@ public class Consumer implements Runnable {
         logger.info("consumer line 43: topic: " + this.topic);
         this.startingPosition = startingPosition;
 
-        //String brokerAddress = Config.hostList.get(this.leaderBrokerName).getHostAddress();
-        //int brokerPort = Config.hostList.get(this.leaderBrokerName).getPort();
-
         this.loadBalancerConnection = Server.connectToLoadBalancer(this.consumerName);
         this.subscribedMsgQ = new LinkedBlockingQueue<>();
         try {
@@ -58,8 +55,10 @@ public class Consumer implements Runnable {
         }
     }
 
+    /**
+     * Helper to update leader connection if old leader fails and new leader if prompted
+     */
     public void updateLeaderBrokerConnection(){
-
         byte[] receivedBytes = this.loadBalancerConnection.receive();
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
@@ -113,7 +112,6 @@ public class Consumer implements Runnable {
                 this.sendRequest(this.startingPosition);
                 receivedBytes = this.leaderBrokerConnection.receive();
             }
-            //receivedBytes = this.leaderBrokerConnection.receive();
             try {
                 MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                 if(receivedMsg.getType().equals("unavailable")){
@@ -153,9 +151,7 @@ public class Consumer implements Runnable {
      * Runnable interface method
      *
      */
-
     public void run() {
-        //int startingPoint = this.startingPosition;
         while(this.leaderBrokerConnection.isOpen() && this.startingPosition >= 0){
             try {
                 Thread.sleep(200);
@@ -174,9 +170,6 @@ public class Consumer implements Runnable {
 
 
     }
-
-
-
 
 
     /**

@@ -190,6 +190,8 @@ public class Broker {
             return false;
         }
     }
+
+
     /**
      * Inner ConnectionHandler class:  an inner helper runnable class to deal a specific connection
      */
@@ -365,7 +367,6 @@ public class Broker {
         }
 
 
-
         /**
          * Helper method to deal broker's request
          * @param receivedMsg
@@ -408,7 +409,6 @@ public class Broker {
                 Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer, msgLists);
                 if(newLeaderId != -1){
-                    //Broker.isElecting = false;
                     membership.setLeaderId(newLeaderId);
                 }
             } else if(type.equals("copy")){

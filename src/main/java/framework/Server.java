@@ -13,6 +13,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static framework.Broker.logger;
 
+
+/**
+ * Server class: build static helper methods which can be used across different kinds of hosts
+ */
 public class Server {
 
     /**
@@ -32,6 +36,11 @@ public class Server {
         return connection;
     }
 
+    /**
+     * Build connection between senderName and load balancer
+     * @param senderName
+     * @return connection to load balancer
+     */
     public static Connection connectToLoadBalancer(String senderName){
         String loadBalancerName = "loadBalancer";
         String loadBalancerAddress = Config.hostList.get(loadBalancerName).getHostAddress();
@@ -49,6 +58,11 @@ public class Server {
         return connection;
     }
 
+    /**
+     * Build data version acoording to broker's msgLists
+     * @param msgLists
+     * @return  a string represents data version
+     */
     public static String buildDataVersion(ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
         StringBuilder sb = new StringBuilder();
         String topic1 = Config.topic1;
@@ -67,6 +81,11 @@ public class Server {
         return sb.toString();
     }
 
+    /**
+     * Method to figure out each topic's count according to dataVersion string
+     * @param dataVersion
+     * @return  two dimensional int
+     */
     public static int[] getTopicMsgCount(String dataVersion){
         int[] res = new int[2];
         ArrayList<Integer> nums = new ArrayList<>();
@@ -81,8 +100,12 @@ public class Server {
         return res;
     }
 
+    /**
+     * Method to figure out earliest data version according to dataVersion list
+     * @param dataVersions
+     * @return  a string represents earliest data version
+     */
     public static String pickEarliestDataVersion(CopyOnWriteArrayList<String> dataVersions){
-
         String s = dataVersions.get(0);
         int[] countsOfS = Server.getTopicMsgCount(s);
         int count1 = countsOfS[0];
@@ -95,7 +118,6 @@ public class Server {
             if(count1 >= nums1){
                 count1 = nums1;
             }
-
             if(count2 >= nums2){
                 count2 = nums2;
             }

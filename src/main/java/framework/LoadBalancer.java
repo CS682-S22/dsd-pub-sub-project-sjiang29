@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static framework.Broker.logger;
 
+/**
+ * LoadBalancer class: class to send coordinator msg to producer and consumer
+ */
 public class LoadBalancer {
     private String loadBalancerName;
     private int loadBalancerPort;
@@ -19,6 +22,10 @@ public class LoadBalancer {
     private ConcurrentHashMap<String, Connection> connections;
     private ServerSocket server;
 
+    /**
+     * Load balancer Constructor
+     * @param loadBalancerName
+     */
     public LoadBalancer(String loadBalancerName) {
         this.loadBalancerName = loadBalancerName;
         this.loadBalancerPort = Config.hostList.get(loadBalancerName).getPort();
@@ -33,6 +40,9 @@ public class LoadBalancer {
         }
     }
 
+    /**
+     * Method to start load balancer
+     */
     public void start(){
         while(this.isRunning){
             Connection connection = Server.buildNewConnection(this.server);
@@ -43,6 +53,9 @@ public class LoadBalancer {
     }
 
 
+    /**
+     * Inner ConnectionHandler class:  an inner helper runnable class to deal a specific connection
+     */
     class ConnectionHandler implements Runnable{
         private Connection connection;
 
@@ -64,9 +77,7 @@ public class LoadBalancer {
                     connections.put(senderName, this.connection);
                     logger.info("load balancer line 62: senderName + " + senderName + " type " + receivedMsg.getType());
                     String type = receivedMsg.getType();
-                    // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
                     if(isBrokerReq(type, senderName)) {
-
                         newLeaderId = receivedMsg.getLeaderId();
                         logger.info("receive coordinator from " + senderName + " new leader " + newLeaderId);
                         notifyAllHosts();
@@ -78,10 +89,18 @@ public class LoadBalancer {
 
         }
 
+        /**
+         * Helper to check if an incoming msg is from broker and also is a coordinator msg
+         * @param senderName
+         * @param type
+         */
         private boolean isBrokerReq(String type, String senderName){
             return type.equals("coordinator") && senderName.contains("broker");
         }
 
+        /**
+         * Helper to send coordinator msg to producer and consumer
+         */
         private void notifyAllHosts(){
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setSenderName(loadBalancerName).
                     setLeaderId(newLeaderId).build();

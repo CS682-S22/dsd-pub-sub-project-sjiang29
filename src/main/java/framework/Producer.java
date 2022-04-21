@@ -60,13 +60,19 @@ public class Producer {
 
     }
 
+    /**
+     * Helper to send required copy number to leader broker
+     * @param copyNum
+     */
     public void sendCopyNum(int copyNum){
-
         MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("copyNum").setCopyNum(copyNum).setSenderName(this.producerName).build();
         logger.info("producer line 67: send num copy to" + this.leaderBrokerName );
         this.leaderBrokerConnection.send(requestMsg.toByteArray());
     }
 
+    /**
+     * Helper to update leader connection if old leader fails and new leader if prompted
+     */
     public void updateLeaderBrokerConnection(){
 
         byte[] receivedBytes = this.loadBalancerConnection.receive();
@@ -74,9 +80,6 @@ public class Producer {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 
             if(receivedMsg.getType().equals("coordinator")){
-
-                //this.hasNewLeader = true;
-
                 int newLeaderId = receivedMsg.getLeaderId();
                 this.leaderBrokerId = newLeaderId;
                 logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
@@ -108,14 +111,6 @@ public class Producer {
            if(sendingRes == false){
                this.msgId--;
                updateLeaderBrokerConnection();
-               //Socket socket = null;
-//               try {
-//                   socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
-//               } catch (IOException e) {
-//                   e.printStackTrace();
-//               }
-//               this.leaderBrokerConnection = new Connection(socket);
-
                this.leaderBrokerConnection.send(sentMsg.toByteArray());
            } else {
                this.numOfSending++;
@@ -124,6 +119,11 @@ public class Producer {
     }
 
 
+    /**
+     * Helper to check is published msg is received and copied successfully by leader and follower, if not resend
+     * @param data
+     * @param topic
+     */
     public synchronized boolean sendSuccessfully(String topic, byte[] data){
         byte[] receivedBytes;
         try {
@@ -132,19 +132,11 @@ public class Producer {
 
             if(receivedBytes == null){
                 updateLeaderBrokerConnection();
-//                try {
-//                    Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);
-//                    this.leaderBrokerConnection = new Connection(socket);
-
                     if(this.numOfSending > this.numOfAck){
                         this.send(topic, data);
                     }
                     receivedBytes = this.leaderBrokerConnection.receive();
-//                } catch (IOException ee) {
-//                    ee.printStackTrace();
-//                }
             }
-
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
             String type = receivedMsg.getType();
             if(type.equals("acknowledge")){
@@ -155,17 +147,9 @@ public class Producer {
             }
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
-
-
         }
         return false;
     }
 
-
-
-    /**
-     * Method to close the connection to a broker
-     *
-     */
 
 }

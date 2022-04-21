@@ -14,8 +14,21 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static framework.Broker.logger;
 
+
+/**
+ * BullyAlgo: class to implement bully algorithm
+ */
 public class BullyAlgo {
 
+
+    /**
+     * static method to implement bully algorithm
+     * @param brokerConnections
+     * @param connectionToLoadBalancer
+     * @param hostBrokerName
+     * @param membership
+     * @param msgLists
+     */
     public static int sendBullyReq(Membership membership, String hostBrokerName,
                                    ConcurrentHashMap<String, Connection> brokerConnections,
                                    Connection connectionToLoadBalancer,
@@ -57,6 +70,9 @@ public class BullyAlgo {
 
     }
 
+    /**
+     * helper to send coordinator msg to load balancer
+     */
     public static void sendCoordinatorMsg(Connection conn, MsgInfo.Msg coordinatorMsg){
         conn.send(coordinatorMsg.toByteArray());
     }
