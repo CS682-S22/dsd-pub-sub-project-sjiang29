@@ -92,11 +92,11 @@ public class Server {
             int[] nums = Server.getTopicMsgCount(dv);
             int nums1 = nums[0];
             int nums2 = nums[1];
-            if(count1 < nums1){
+            if(count1 >= nums1){
                 count1 = nums1;
             }
 
-            if(count2 < nums2){
+            if(count2 >= nums2){
                 count2 = nums2;
             }
         }

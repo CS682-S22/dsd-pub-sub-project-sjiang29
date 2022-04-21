@@ -210,17 +210,31 @@ public class AutoTests {
     }
 
     @Test
-    public void checkGetTopicNum1(){
+    public void testCheckGetTopicNum1(){
         String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
         int[] res = Server.getTopicMsgCount(s);
         Assertions.assertEquals(1, res[0]);
     }
 
     @Test
-    public void checkGetTopicNum2(){
+    public void testCheckGetTopicNum2(){
         String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
         int[] res = Server.getTopicMsgCount(s);
         Assertions.assertEquals(9, res[1]);
+    }
+
+    @Test
+    public void pickEarliestDataVersion(){
+        CopyOnWriteArrayList<String> l = new CopyOnWriteArrayList<>();
+        String s1 = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
+        String s2 = Config.topic1 + ":" + "10" + ";" + Config.topic2 + ":" + "2";
+        l.add(s1);
+        l.add(s2);
+        String res = Server.pickEarliestDataVersion(l);
+        String predicted = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
+        Assertions.assertEquals(res, predicted);
+
+
     }
 
 
