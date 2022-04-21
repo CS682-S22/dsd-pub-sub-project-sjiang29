@@ -67,7 +67,7 @@ public class Server {
         return sb.toString();
     }
 
-    public static int[] getTopicNum(String dataVersion){
+    public static int[] getTopicMsgCount(String dataVersion){
         int[] res = new int[2];
         ArrayList<Integer> nums = new ArrayList<>();
         String[] parts = dataVersion.split(";");
@@ -80,6 +80,31 @@ public class Server {
         res[1] = nums.get(1);
         return res;
     }
+
+    public static String pickEarliestDataVersion(CopyOnWriteArrayList<String> dataVersions){
+
+        String s = dataVersions.get(0);
+        int[] countsOfS = Server.getTopicMsgCount(s);
+        int count1 = countsOfS[0];
+        int count2 = countsOfS[1];
+
+        for(String dv : dataVersions){
+            int[] nums = Server.getTopicMsgCount(dv);
+            int nums1 = nums[0];
+            int nums2 = nums[1];
+            if(count1 < nums1){
+                count1 = nums1;
+            }
+
+            if(count2 < nums2){
+                count2 = nums2;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(Config.topic1).append(":").append(count1).append(";").append(Config.topic2).append(":").append(count2);
+        return sb.toString();
+    }
+
 
 
 }

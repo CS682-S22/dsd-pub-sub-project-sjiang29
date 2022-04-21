@@ -212,14 +212,14 @@ public class AutoTests {
     @Test
     public void checkGetTopicNum1(){
         String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
-        int[] res = Server.getTopicNum(s);
+        int[] res = Server.getTopicMsgCount(s);
         Assertions.assertEquals(1, res[0]);
     }
 
     @Test
     public void checkGetTopicNum2(){
         String s = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
-        int[] res = Server.getTopicNum(s);
+        int[] res = Server.getTopicMsgCount(s);
         Assertions.assertEquals(9, res[1]);
     }
 

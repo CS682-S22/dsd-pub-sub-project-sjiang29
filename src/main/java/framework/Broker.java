@@ -243,8 +243,8 @@ public class Broker {
         }
 
         private boolean isBrokerReq(String type, String senderName){
-            boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator")
-                    || type.equals("copy") || type.equals("successfulCopy");
+            boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
+                    type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy") || type.equals("earliestDataVersion");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -372,18 +372,31 @@ public class Broker {
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
             } else if (type.equals("coordinator")){
-                Broker.isElecting = false;
+                //Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
                 String dataVersion = Server.buildDataVersion(msgLists);
                 MsgInfo.Msg dataVersionMsg = MsgInfo.Msg.newBuilder().setType("dataVersion").setDataVersion(dataVersion).setSenderName(brokerName).build();
                 this.connection.send(dataVersionMsg.toByteArray());
 
+            } else if(type.equals("dataVersion")) {
+                Broker.isElecting = false;
+                String currentBrokerDv = Server.buildDataVersion(msgLists);
+                dataVersions.add(currentBrokerDv);
+                String dataVersion = receivedMsg.getDataVersion();
+                dataVersions.add(dataVersion);
+                String earliestDV = Server.pickEarliestDataVersion(dataVersions);
+                dealEarliestDataVersion(earliestDV);
+                sendEarliestToFollowers(earliestDV);
+
+            } else if(type.equals("earliestDataVersion")) {
+                String earliestDV = receivedMsg.getDataVersion();
+                dealEarliestDataVersion(earliestDV);
             } else if (type.equals("election")){
                 Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer, msgLists);
                 if(newLeaderId != -1){
-                    Broker.isElecting = false;
+                    //Broker.isElecting = false;
                     membership.setLeaderId(newLeaderId);
                 }
             } else if(type.equals("copy")){
@@ -404,19 +417,62 @@ public class Broker {
             }
 
         }
-    }
 
-    private void dealCopy(MsgInfo.Msg receivedMsg){
-        String publishedTopic = receivedMsg.getTopic();
-        logger.info("broker line 298: publishedTopic + " + publishedTopic);
-        CopyOnWriteArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
-        if(messages == null){
-            messages = new CopyOnWriteArrayList<>();
+        private void dealCopy(MsgInfo.Msg receivedMsg){
+            String publishedTopic = receivedMsg.getTopic();
+            logger.info("broker line 298: publishedTopic + " + publishedTopic);
+            CopyOnWriteArrayList<MsgInfo.Msg> messages = msgLists.get(publishedTopic);
+            if(messages == null){
+                messages = new CopyOnWriteArrayList<>();
+            }
+            messages.add(receivedMsg);
+
+            msgLists.put(publishedTopic, messages);
         }
-        messages.add(receivedMsg);
 
-        msgLists.put(publishedTopic, messages);
+        private void sendEarliestToFollowers(String earliestDataVersion){
+            MsgInfo.Msg earliestDVMsg = MsgInfo.Msg.newBuilder().setType("earliestDataVersion").setDataVersion(earliestDataVersion)
+                    .setSenderName(brokerName).build();
+            ArrayList<Integer> followers = membership.getFollowers(brokerId);
+            for(int follower: followers){
+                Connection connection = brokerConnections.get(Config.brokerList.get(follower).getHostName());
+                logger.info("broker line 327: send to follower");
+                Thread t = new Thread(() -> sendToFollower(earliestDVMsg, connection));
+                t.start();
+            }
+        }
+
+        private void dealEarliestDataVersion(String earliestDataVersion){
+            int[] nums = Server.getTopicMsgCount(earliestDataVersion);
+            int countOfTopic1 = nums[0];
+            int countOftopic2 = nums[1];
+            String topic1 = Config.topic1;
+            String topic2 = Config.topic2;
+
+            if(countOfTopic1 < msgLists.get(topic1).size()){
+                rollBack(countOfTopic1, topic1);
+            }
+
+            if(countOftopic2 < msgLists.get(topic2).size()){
+                rollBack(countOftopic2, topic2);
+            }
+        }
+
+        private void rollBack(int count, String topic){
+            int size = msgLists.get(topic).size();
+            int diff = size - count;
+            for(int i = 0; i < diff; i++){
+                size = msgLists.get(topic).size();
+                msgLists.get(topic).remove(size - 1);
+            }
+        }
+
+
+
     }
+
+
+
 
 
 
