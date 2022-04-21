@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Broker class:  broker to communicate with either producer or consumer and deal their corresponding request
  */
 public class Broker {
+    //current broker info
     public static  Logger logger = LogManager.getLogger();
     public static volatile boolean isElecting;
     private String brokerName;
@@ -31,11 +32,11 @@ public class Broker {
     private ServerSocket server;
     private int brokerPort;
 
-
     private volatile boolean isRunning;
     private volatile boolean isSync;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
+    // data version from current broker and its followers
     private CopyOnWriteArrayList<String> dataVersions;
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
@@ -48,6 +49,7 @@ public class Broker {
 
     // key is producer name
     private ConcurrentHashMap<String, CopyStatus> copyStatuses;
+    //key is producer, value is producer name
     private ConcurrentHashMap<String, String> topicToClient;
 
     /**
@@ -78,17 +80,18 @@ public class Broker {
             //starting broker server
             logger.info("broker line 64: broker starts at port: " + this.brokerPort);
             this.server = new ServerSocket(this.brokerPort);
-            //connectToOtherBrokers();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Helper to build connections to other brokers on config
+     */
     public void connectToOtherBrokers(){
         while(true){
             try{
-
                 for(int id : Config.brokerList.keySet()) {
                     if (id != this.brokerId) {
                         HostInfo hostInfo = Config.brokerList.get(id);
@@ -102,7 +105,6 @@ public class Broker {
                         this.membership.markAlive(connectedBrokerId);
                     }
                 }
-
                 break;
             }catch (IOException e){
                 try {
@@ -114,32 +116,11 @@ public class Broker {
             }
         }
     }
-    private void connectToBroker(String connectedBrokerAddress, int connectedBrokerPort,
-                                 int connectedBrokerId,String connectedBrokerName) {
-        boolean trying = true;
-        Socket socket = null;
-        while(trying){
-            try {
-                socket = new Socket(connectedBrokerAddress, connectedBrokerPort);
-                trying = false;
-            } catch (IOException e) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-                e.printStackTrace();
 
-            }
-        }
 
-        Connection connection = new Connection(socket);
-        logger.info("build new connection with " + connectedBrokerName);
-        this.brokerConnections.put(connectedBrokerName, connection);
-        this.membership.markAlive(connectedBrokerId);
-
-    }
-
+    /**
+     * Helper to send heart beat to other brokers
+     */
     public void sendHb() {
         Set<Integer> allMembers = this.membership.getAllMembers();
         logger.info("broker line 112 isElecting: " + this.isElecting);
@@ -152,13 +133,8 @@ public class Broker {
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
                 HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
                 hbScheduler.start();
-                //HeartBeatReceiver hbReceiver = new HeartBeatReceiver(connection, this.receivedHeartBeatTime, this.membership);
-                //hbReceiver.run();
             }
         }
-
-
-
     }
 
 
@@ -186,10 +162,7 @@ public class Broker {
         this.failureDetector.start();
 
         while(this.isRunning){
-            //Thread t = new Thread(() -> connectToOtherBrokers());
-            //t.start();
             logger.info("broker line 141: connect to other brokers" );
-
             Connection connection = Server.buildNewConnection(this.server);
 
             Thread connectionHandler = new Thread(new ConnectionHandler(connection));
@@ -204,12 +177,11 @@ public class Broker {
         this.isRunning = false;
     }
 
+
     /**
-     * Listens to new socket connection, return corresponding connection according to value of delay and lossRate
-     * @return see method description
+     * Method to check if current broker is leader, return true is yes
+     * @return  see method description
      */
-
-
     public boolean isLeader(){
         //int currentBrokerId = this.membership.getId(this.brokerName);
         if(this.brokerId == this.membership.getLeaderId()){
@@ -245,8 +217,6 @@ public class Broker {
                     connections.put(senderName, this.connection);
                     String type = receivedMsg.getType();
                     logger.info("broker line 223: senderName + " + senderName + "**type: " + type);
-
-                    // if msg type is subscribe and sender is a consumer, use dealConsumerReq, else use dealProducerReq
                     if(isConsumerReq(type, senderName)) {
                         dealConsumerReq(receivedMsg);
                     } else if(isProducerReq(type, senderName)) {
@@ -261,14 +231,26 @@ public class Broker {
         }
 
 
+        /**
+         * Method to check if a coming request is a consumer request, return true if yes
+         * @return see method description
+         */
         private boolean isConsumerReq(String type, String senderName){
             return type.equals("subscribe") && senderName.contains("consumer");
         }
 
+        /**
+         * Method to check if a coming request is a producer request, return true if yes
+         * @return see method description
+         */
         private boolean isProducerReq(String type, String senderName){
             return (type.equals("publish") || (type.equals("copyNum"))) && senderName.contains("producer");
         }
 
+        /**
+         * Method to check if a coming request is a broker request, return true if yes
+         * @return see method description
+         */
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
                     type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
@@ -378,55 +360,24 @@ public class Broker {
                 logger.info("broker line 327: send to follower");
                 Thread t = new Thread(() -> sendToFollower(copiedMsg, connection));
                 t.start();
-//                byte[] receivedBytes = this.connection.receive();
-//                try {
-//                    MsgInfo.Msg replyMsg = MsgInfo.Msg.parseFrom(receivedBytes);
-//                    if(replyMsg.getType().equals("successfulCopy")){
-//                        logger.info("broker line 332: receive successful from + " + replyMsg.getSenderName());
-//                        numOfSuccessCopy++;
-//                    }
-//                } catch (InvalidProtocolBufferException e) {
-//                    e.printStackTrace();
-//                }
-
-
             }
 
         }
 
-        private void syncToNewFollower(){
-            isSync = true;
-            if(isSync){
-                for(String topic : msgLists.keySet()){
-                    CopyOnWriteArrayList<MsgInfo.Msg> list = msgLists.get(topic);
-                    int msgCount = list.size();
-                    int i = 0;
-                    while(i < msgCount){
-                        MsgInfo.Msg msg = list.get(i);
-                        MsgInfo.Msg syncMsg = MsgInfo.Msg.newBuilder().setType("sync").setTopic(topic).setSenderName(brokerName).
-                                setContent(msg.getContent()).build();
-                        this.connection.send(syncMsg.toByteArray());
-                    }
-                }
-            }
-            isSync = false;
-        }
 
-        private void deadSyncMsg(MsgInfo.Msg receivedMsg){
-            dealCopy(receivedMsg);
-        }
 
+        /**
+         * Helper method to deal broker's request
+         * @param receivedMsg
+         */
         private void dealBrokerReq(MsgInfo.Msg receivedMsg, Connection connection){
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
             if(type.equals("HeartBeat")){
-                //logger.info("broker line 327: receive hb from + " + senderName);
                 long currentTime = System.nanoTime();
                 int id = receivedMsg.getSenderId();
-                //logger.info("broker line 336: mark time + " + id + currentTime);
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
-                //brokerConnections.put(senderName, this.connection);
                 if(senderName.contains("new") && isLeader()){
                     Thread t = new Thread(() -> syncToNewFollower());
                     t.start();
@@ -434,7 +385,6 @@ public class Broker {
             } else if (type.equals("sync") && brokerName.contains("new")) {
                 deadSyncMsg(receivedMsg);
             } else if (type.equals("coordinator")){
-                //Broker.isElecting = false;
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
                 String dataVersion = Server.buildDataVersion(msgLists);
@@ -480,6 +430,39 @@ public class Broker {
 
         }
 
+        /**
+         * Helper method to deal new coming broker, to sync current leader's data to this new coming
+         */
+        private void syncToNewFollower(){
+            isSync = true;
+            if(isSync){
+                for(String topic : msgLists.keySet()){
+                    CopyOnWriteArrayList<MsgInfo.Msg> list = msgLists.get(topic);
+                    int msgCount = list.size();
+                    int i = 0;
+                    while(i < msgCount){
+                        MsgInfo.Msg msg = list.get(i);
+                        MsgInfo.Msg syncMsg = MsgInfo.Msg.newBuilder().setType("sync").setTopic(topic).setSenderName(brokerName).
+                                setContent(msg.getContent()).build();
+                        this.connection.send(syncMsg.toByteArray());
+                    }
+                }
+            }
+            isSync = false;
+        }
+
+        /**
+         * Helper method to deal sync msg from leader broker
+         * @param receivedMsg
+         */
+        private void deadSyncMsg(MsgInfo.Msg receivedMsg){
+            dealCopy(receivedMsg);
+        }
+
+        /**
+         * Helper method to deal copy msg from leader broker
+         * @param receivedMsg
+         */
         private void dealCopy(MsgInfo.Msg receivedMsg){
             String publishedTopic = receivedMsg.getTopic();
             logger.info("broker line 298: publishedTopic + " + publishedTopic);
@@ -492,6 +475,10 @@ public class Broker {
             msgLists.put(publishedTopic, messages);
         }
 
+        /**
+         * Helper method to send earliestDataVersion among all live brokers to all brokers
+         * @param earliestDataVersion
+         */
         private void sendEarliestToFollowers(String earliestDataVersion){
             MsgInfo.Msg earliestDVMsg = MsgInfo.Msg.newBuilder().setType("earliestDataVersion").setDataVersion(earliestDataVersion)
                     .setSenderName(brokerName).build();
@@ -504,6 +491,10 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper method to deal earliestDataVersion msg type, roll back to earliest data version accordingly
+         * @param earliestDataVersion
+         */
         private void dealEarliestDataVersion(String earliestDataVersion){
             int[] nums = Server.getTopicMsgCount(earliestDataVersion);
             int countOfTopic1 = nums[0];
@@ -520,6 +511,11 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper method to roll back data
+         * @param topic topic that needs to be rolled back
+         * @param count target count after rolling back
+         * */
         private void rollBack(int count, String topic){
             int size = msgLists.get(topic).size();
             int diff = size - count;
@@ -528,6 +524,8 @@ public class Broker {
                 msgLists.get(topic).remove(size - 1);
             }
         }
+
+
 
 
 
