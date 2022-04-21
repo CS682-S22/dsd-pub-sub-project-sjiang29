@@ -71,8 +71,8 @@ public class Broker {
         this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
         this.connections.put("loadBalancer", connectionToLoadBalancer);
 
-        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,8000000000L,
-                this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 8000);
+        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,10000000000L,
+                this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 10000);
         this.isRunning = true;
         this.isSync = false;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
