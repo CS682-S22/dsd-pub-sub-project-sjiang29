@@ -23,14 +23,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Broker class:  broker to communicate with either producer or consumer and deal their corresponding request
  */
-public class Broker {
+public class PushBroker {
     //current broker info
     public static  Logger logger = LogManager.getLogger();
     public static volatile boolean isElecting;
     private String brokerName;
     private int brokerId;
-    // push or pull based
-    private String brokerType;
     private ServerSocket server;
     private int brokerPort;
 
@@ -38,8 +36,6 @@ public class Broker {
     private volatile boolean isSync;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
-    // key is topic, value is list of consumers who subscribe this topic
-    private ConcurrentHashMap<String, ArrayList<String>> subscriberList;
     // data version from current broker and its followers
     private CopyOnWriteArrayList<String> dataVersions;
     // key is the name of the other end of connection
@@ -60,13 +56,11 @@ public class Broker {
      * Constructor
      * @param brokerName
      */
-    public Broker(String brokerName, String brokerType) {
+    public PushBroker(String brokerName) {
         this.brokerName = brokerName;
-        this.brokerType = brokerType;
         this.brokerId = Config.nameToId.get(this.brokerName);
         isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
-        this.subscriberList = new ConcurrentHashMap<>();
         this.dataVersions = new CopyOnWriteArrayList<>();
         this.copyStatuses = new ConcurrentHashMap<>();
         this.topicToClient = new ConcurrentHashMap<>();
@@ -226,7 +220,7 @@ public class Broker {
                     String type = receivedMsg.getType();
                     logger.info("broker line 223: senderName + " + senderName + "**type: " + type);
                     if(isConsumerReq(type, senderName)) {
-                        dealConsumerReq(receivedMsg, senderName);
+                        dealConsumerReq(receivedMsg);
                     } else if(isProducerReq(type, senderName)) {
                         dealProducerReq(receivedMsg);
                     } else if(isBrokerReq(type, senderName)) {
@@ -270,7 +264,7 @@ public class Broker {
          * Helper method to deal consumer's request
          * @param receivedMsg
          */
-        private void dealConsumerReq(MsgInfo.Msg receivedMsg, String senderName) {
+        private void dealConsumerReq(MsgInfo.Msg receivedMsg) {
             String subscribedTopic = receivedMsg.getTopic();
             int startingPosition = receivedMsg.getStartingPosition();
             int requiredMsgCount = receivedMsg.getRequiredMsgCount();
@@ -280,57 +274,28 @@ public class Broker {
                 MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
                 this.connection.send(responseMsg.toByteArray());
             } else {
-                if(brokerType.equals("pull")){
-                    dealPullConsumerReq(subscribedTopic, startingPosition, requiredMsgCount);
-                } else if(brokerType.equals("push")){
-                    dealPushConsumerReq(subscribedTopic,startingPosition,senderName);
-                }
+                CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
+                if(requiredMsgList == null){
 
+                }else{
+                    // send Msg one by one
+                    MsgInfo.Msg requiredMsg;
+                    int endPoint;
+                    if(requiredMsgList.size() > startingPosition + requiredMsgCount){
+                        endPoint = startingPosition + requiredMsgCount;
+                    } else {
+                        endPoint = requiredMsgList.size();
+                    }
+                    for(int i = startingPosition; i < endPoint; i++){
+                        requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
+                        logger.info("broker 144, response msg : " + new String(requiredMsg.getContent().toByteArray()));
+                        this.connection.send(requiredMsg.toByteArray());
+                    }
+                    MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
+                    this.connection.send(stopMsg.toByteArray());
+                }
             }
-        }
 
-        private void dealPullConsumerReq(String subscribedTopic, int startingPosition, int requiredMsgCount){
-            CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-            if(requiredMsgList == null){
-                MsgInfo.Msg responseMsg = MsgInfo.Msg.newBuilder().setType("unavailable").setSenderName(brokerName).build();
-                this.connection.send(responseMsg.toByteArray());
-            }else{
-                // send Msg one by one
-                MsgInfo.Msg requiredMsg;
-                int endPoint;
-                if(requiredMsgList.size() > startingPosition + requiredMsgCount){
-                    endPoint = startingPosition + requiredMsgCount;
-                } else {
-                    endPoint = requiredMsgList.size();
-                }
-                for(int i = startingPosition; i < endPoint; i++){
-                    requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                    logger.info("broker 144, response msg : " + new String(requiredMsg.getContent().toByteArray()));
-                    this.connection.send(requiredMsg.toByteArray());
-                }
-                MsgInfo.Msg stopMsg = MsgInfo.Msg.newBuilder().setType("stop").build();
-                this.connection.send(stopMsg.toByteArray());
-            }
-        }
-
-        private void dealPushConsumerReq(String subscribedTopic, int startingPosition, String senderName) {
-            logger.info("broker line 129: subscribedTopic: " + subscribedTopic);
-            ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
-            if(subscribers == null){
-                subscribers = new ArrayList<>();
-            }
-            subscribers.add(senderName);
-            logger.info("broker line 135: subscriber name + " + senderName);
-            subscriberList.put(subscribedTopic, subscribers);
-            CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-            if(requiredMsgList != null) {
-                MsgInfo.Msg requiredMsg;
-                for(int i = startingPosition; i < requiredMsgList.size(); i++){
-                    requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                    logger.info("broker 142, response msg : " + new String(requiredMsg.getContent().toByteArray()));
-                    this.connection.send(requiredMsg.toByteArray());
-                }
-            }
         }
 
         /**
@@ -569,3 +534,4 @@ public class Broker {
 
 
 }
+
