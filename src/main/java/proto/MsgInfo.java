@@ -105,6 +105,18 @@ public final class MsgInfo {
      */
     com.google.protobuf.ByteString
         getDataVersionBytes();
+
+    /**
+     * <code>string subscriber = 12;</code>
+     * @return The subscriber.
+     */
+    java.lang.String getSubscriber();
+    /**
+     * <code>string subscriber = 12;</code>
+     * @return The bytes for subscriber.
+     */
+    com.google.protobuf.ByteString
+        getSubscriberBytes();
   }
   /**
    * Protobuf type {@code Msg}
@@ -124,6 +136,7 @@ public final class MsgInfo {
       senderName_ = "";
       type_ = "";
       dataVersion_ = "";
+      subscriber_ = "";
     }
 
     @java.lang.Override
@@ -213,6 +226,12 @@ public final class MsgInfo {
               java.lang.String s = input.readStringRequireUtf8();
 
               dataVersion_ = s;
+              break;
+            }
+            case 98: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              subscriber_ = s;
               break;
             }
             default: {
@@ -476,6 +495,44 @@ public final class MsgInfo {
       }
     }
 
+    public static final int SUBSCRIBER_FIELD_NUMBER = 12;
+    private volatile java.lang.Object subscriber_;
+    /**
+     * <code>string subscriber = 12;</code>
+     * @return The subscriber.
+     */
+    @java.lang.Override
+    public java.lang.String getSubscriber() {
+      java.lang.Object ref = subscriber_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        subscriber_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string subscriber = 12;</code>
+     * @return The bytes for subscriber.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSubscriberBytes() {
+      java.lang.Object ref = subscriber_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        subscriber_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -522,6 +579,9 @@ public final class MsgInfo {
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(dataVersion_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 11, dataVersion_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(subscriber_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 12, subscriber_);
       }
       unknownFields.writeTo(output);
     }
@@ -572,6 +632,9 @@ public final class MsgInfo {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(dataVersion_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, dataVersion_);
       }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(subscriber_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(12, subscriber_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -609,6 +672,8 @@ public final class MsgInfo {
           != other.getLeaderId()) return false;
       if (!getDataVersion()
           .equals(other.getDataVersion())) return false;
+      if (!getSubscriber()
+          .equals(other.getSubscriber())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -642,6 +707,8 @@ public final class MsgInfo {
       hash = (53 * hash) + getLeaderId();
       hash = (37 * hash) + DATAVERSION_FIELD_NUMBER;
       hash = (53 * hash) + getDataVersion().hashCode();
+      hash = (37 * hash) + SUBSCRIBER_FIELD_NUMBER;
+      hash = (53 * hash) + getSubscriber().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -797,6 +864,8 @@ public final class MsgInfo {
 
         dataVersion_ = "";
 
+        subscriber_ = "";
+
         return this;
       }
 
@@ -834,6 +903,7 @@ public final class MsgInfo {
         result.copyNum_ = copyNum_;
         result.leaderId_ = leaderId_;
         result.dataVersion_ = dataVersion_;
+        result.subscriber_ = subscriber_;
         onBuilt();
         return result;
       }
@@ -917,6 +987,10 @@ public final class MsgInfo {
         }
         if (!other.getDataVersion().isEmpty()) {
           dataVersion_ = other.dataVersion_;
+          onChanged();
+        }
+        if (!other.getSubscriber().isEmpty()) {
+          subscriber_ = other.subscriber_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -1471,6 +1545,82 @@ public final class MsgInfo {
         onChanged();
         return this;
       }
+
+      private java.lang.Object subscriber_ = "";
+      /**
+       * <code>string subscriber = 12;</code>
+       * @return The subscriber.
+       */
+      public java.lang.String getSubscriber() {
+        java.lang.Object ref = subscriber_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          subscriber_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string subscriber = 12;</code>
+       * @return The bytes for subscriber.
+       */
+      public com.google.protobuf.ByteString
+          getSubscriberBytes() {
+        java.lang.Object ref = subscriber_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          subscriber_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string subscriber = 12;</code>
+       * @param value The subscriber to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSubscriber(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        subscriber_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string subscriber = 12;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSubscriber() {
+        
+        subscriber_ = getDefaultInstance().getSubscriber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string subscriber = 12;</code>
+       * @param value The bytes for subscriber to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSubscriberBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        subscriber_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -1538,13 +1688,13 @@ public final class MsgInfo {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\tmsg.proto\"\321\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
+      "\n\tmsg.proto\"\345\001\n\003Msg\022\n\n\002id\030\001 \001(\005\022\r\n\005topic" +
       "\030\002 \001(\t\022\017\n\007content\030\003 \001(\014\022\022\n\nsenderName\030\004 " +
       "\001(\t\022\020\n\010senderId\030\005 \001(\005\022\014\n\004type\030\006 \001(\t\022\030\n\020s" +
       "tartingPosition\030\007 \001(\005\022\030\n\020requiredMsgCoun" +
       "t\030\010 \001(\005\022\017\n\007copyNum\030\t \001(\005\022\020\n\010leaderId\030\n \001" +
-      "(\005\022\023\n\013dataVersion\030\013 \001(\tB\tB\007MsgInfob\006prot" +
-      "o3"
+      "(\005\022\023\n\013dataVersion\030\013 \001(\t\022\022\n\nsubscriber\030\014 " +
+      "\001(\tB\tB\007MsgInfob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1555,7 +1705,7 @@ public final class MsgInfo {
     internal_static_Msg_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Msg_descriptor,
-        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", "LeaderId", "DataVersion", });
+        new java.lang.String[] { "Id", "Topic", "Content", "SenderName", "SenderId", "Type", "StartingPosition", "RequiredMsgCount", "CopyNum", "LeaderId", "DataVersion", "Subscriber", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

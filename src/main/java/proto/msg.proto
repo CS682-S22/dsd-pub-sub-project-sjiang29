@@ -18,5 +18,6 @@ message Msg {
   int32 copyNum = 9;
   int32 leaderId = 10;
   string dataVersion = 11;
+  string subscriber = 12;
 
 }

@@ -262,7 +262,7 @@ public class Broker {
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
                     type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
-                    || type.equals("earliestDataVersion") || type.equals("sync");
+                    || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -314,14 +314,12 @@ public class Broker {
         }
 
         private void dealPushConsumerReq(String subscribedTopic, int startingPosition, String senderName) {
-            logger.info("broker line 129: subscribedTopic: " + subscribedTopic);
-            ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
-            if(subscribers == null){
-                subscribers = new ArrayList<>();
-            }
-            subscribers.add(senderName);
-            logger.info("broker line 135: subscriber name + " + senderName);
-            subscriberList.put(subscribedTopic, subscribers);
+            addNewSubscriber(subscribedTopic,senderName);
+            // also need to let followers add this new subscriber
+            MsgInfo.Msg subscriber = MsgInfo.Msg.newBuilder().setTopic(subscribedTopic).setType("subscriber")
+                    .setSubscriber(senderName).setSenderName(brokerName).build();
+            sendToFollowers(subscriber);
+
             CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
             if(requiredMsgList != null) {
                 MsgInfo.Msg requiredMsg;
@@ -331,6 +329,16 @@ public class Broker {
                     this.connection.send(requiredMsg.toByteArray());
                 }
             }
+        }
+
+        private void addNewSubscriber(String subscribedTopic, String newSubscriber){
+            ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
+            if(subscribers == null){
+                subscribers = new ArrayList<>();
+            }
+            subscribers.add(newSubscriber);
+            logger.info("broker line 135: subscriber name + " + newSubscriber);
+            subscriberList.put(subscribedTopic, subscribers);
         }
 
         /**
@@ -355,8 +363,21 @@ public class Broker {
                         messages = new CopyOnWriteArrayList<>();
                     }
                     messages.add(receivedMsg);
-
                     msgLists.put(publishedTopic, messages);
+                    // if is push based, send new coming msg to subscribers instantly
+                    if(brokerType.equals("push")){
+                        ArrayList<String> subscribers = subscriberList.get(publishedTopic);
+                        if(subscribers != null){
+                            for(String subscriber : subscribers){
+                                logger.info("broker line 164: subscriber " + subscriber);
+                                Connection connection = connections.get(subscriber);
+                                MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
+                                logger.info("broker 175, response msg : " + new String(requiredMsg.getContent().toByteArray()));
+                                connection.send(requiredMsg.toByteArray());
+                            }
+                        }
+                    }
+
                     logger.info("broker line 306: is leader? + " + isLeader());
                     if(isLeader()){
                         sendToFollowers(receivedMsg);
@@ -456,6 +477,10 @@ public class Broker {
                 logger.info("broker line 357: receive successful from + " + senderName);
                 String producerName = topicToClient.get(copiedTopic);
                 copyStatuses.get(producerName).incrementSuccessCopy();
+            } else if(type.equals("subscriber")){
+                String subscribedTopic = receivedMsg.getTopic();
+                String subscriber = receivedMsg.getSubscriber();
+                addNewSubscriber(subscribedTopic, subscriber);
             }
 
         }
@@ -527,7 +552,7 @@ public class Broker {
         private void dealEarliestDataVersion(String earliestDataVersion){
             int[] nums = Server.getTopicMsgCount(earliestDataVersion);
             int countOfTopic1 = nums[0];
-            int countOftopic2 = nums[1];
+            int countOfTopic2 = nums[1];
             String topic1 = Config.topic1;
             String topic2 = Config.topic2;
 
@@ -535,8 +560,8 @@ public class Broker {
                 rollBack(countOfTopic1, topic1);
             }
 
-            if(countOftopic2 < msgLists.get(topic2).size()){
-                rollBack(countOftopic2, topic2);
+            if(countOfTopic2 < msgLists.get(topic2).size()){
+                rollBack(countOfTopic2, topic2);
             }
         }
 
