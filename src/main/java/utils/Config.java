@@ -22,9 +22,9 @@ public class Config {
     public static HostInfo consumer1 = new HostInfo("consumer1", "localhost",1858, 0);
     public static HostInfo consumer2 = new HostInfo("consumer2", "localhost",1859, 0);
 
-    public static HostInfo loadBalancer1 = new HostInfo("loadBalancer1", "localhost",1861, 0);
-    public static HostInfo loadBalancer2 = new HostInfo("loadBalancer2", "localhost",1862, 0);
-    public static HostInfo loadBalancer3 = new HostInfo("loadBalancer3", "localhost",1863, 0);
+    public static HostInfo loadBalancer1 = new HostInfo("loadBalancer1", "localhost",1861, -1);
+    public static HostInfo loadBalancer2 = new HostInfo("loadBalancer2", "localhost",1862, -2);
+    public static HostInfo loadBalancer3 = new HostInfo("loadBalancer3", "localhost",1863, -3);
 
 
     // HashMap for looking for a host information using its name
@@ -52,6 +52,10 @@ public class Config {
     //map host name with its id
     public static final HashMap<String, Integer> nameToId = new HashMap<String, Integer>(){{
         put("broker0", 1); put("broker1", 6); put("broker2", 7);put("broker3", 8);put("broker4", 9); put("broker5", 10);
+    }};
+
+    public static final HashMap<Integer, String> idToName = new HashMap<Integer, String>(){{
+        put(-1, "loadBalancer1"); put(-2, "loadBalancer2"); put(-3, "loadBalancer3");
     }};
     public static final String publishedFile1 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier1.log";
     public static final String publishedFile2 = "/Users/sj/Desktop/Distributed Software Dev/Projects/p2/proxifier2.log";

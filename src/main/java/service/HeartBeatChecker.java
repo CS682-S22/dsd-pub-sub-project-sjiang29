@@ -24,7 +24,8 @@ public class HeartBeatChecker implements Runnable {
     private long timeoutNanos;
     private Membership membership;
     private ConcurrentHashMap<String, Connection> brokerConnections;
-    private Connection connectionToLoadBalancer;
+    private ConcurrentHashMap<String, Connection> loadBalancerConnections;
+    //private Connection connectionToLoadBalancer;
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
 
     /**
@@ -32,7 +33,7 @@ public class HeartBeatChecker implements Runnable {
      * @param msgLists
      * @param membership
      * @param hostBrokerName
-     * @param connectionToLoadBalancer
+     * @param loadBalancerConnections
      * @param brokerConnections
      * @param heartBeatReceivedTimes
      * @param timeoutNanos
@@ -41,14 +42,14 @@ public class HeartBeatChecker implements Runnable {
                             ConcurrentHashMap<Integer, Long> heartBeatReceivedTimes,
                             long timeoutNanos, Membership membership,
                             ConcurrentHashMap<String, Connection> brokerConnections,
-                            Connection connectionToLoadBalancer,
+                            ConcurrentHashMap<String, Connection> loadBalancerConnections,
                             ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists) {
         this.hostBrokerName = hostBrokerName;
         this.heartBeatReceivedTimes = heartBeatReceivedTimes;
         this.timeoutNanos = timeoutNanos;
         this.membership = membership;
         this.brokerConnections = brokerConnections;
-        this.connectionToLoadBalancer = connectionToLoadBalancer;
+        this.loadBalancerConnections = loadBalancerConnections;
         this.msgLists = msgLists;
     }
 
@@ -74,7 +75,7 @@ public class HeartBeatChecker implements Runnable {
                     logger.info("hb checker line 49: start bully" );
                     Broker.isElecting = true;
                     int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections,
-                            this.connectionToLoadBalancer, this.msgLists);
+                            this.loadBalancerConnections, this.msgLists);
                     if (newLeaderId != -1) {
                         Broker.isElecting = false;
                         this.membership.setLeaderId(newLeaderId);

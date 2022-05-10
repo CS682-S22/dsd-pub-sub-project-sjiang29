@@ -24,14 +24,14 @@ public class BullyAlgo {
     /**
      * static method to implement bully algorithm
      * @param brokerConnections
-     * @param connectionToLoadBalancer
+     * @param loadBalancerConnections
      * @param hostBrokerName
      * @param membership
      * @param msgLists
      */
     public static int sendBullyReq(Membership membership, String hostBrokerName,
                                    ConcurrentHashMap<String, Connection> brokerConnections,
-                                   Connection connectionToLoadBalancer,
+                                   ConcurrentHashMap<String, Connection> loadBalancerConnections,
                                    ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists){
 
         Broker.isElecting = true;
@@ -62,8 +62,13 @@ public class BullyAlgo {
                 Thread t = new Thread(() -> sendCoordinatorMsg(connection, coordinatorMsg));
                 t.start();
             }
+            // send coordinator msg to first available load balancer
             logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
-            connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
+            for(String loadBalancer : loadBalancerConnections.keySet()){
+                Connection connectionToLoadBalancer = loadBalancerConnections.get(loadBalancer);
+                connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
+                break;
+            }
 
         }
         return newLeaderId;
@@ -71,7 +76,7 @@ public class BullyAlgo {
     }
 
     /**
-     * helper to send coordinator msg to load balancer
+     * helper to send coordinator msg to other brokers
      */
     public static void sendCoordinatorMsg(Connection conn, MsgInfo.Msg coordinatorMsg){
         conn.send(coordinatorMsg.toByteArray());

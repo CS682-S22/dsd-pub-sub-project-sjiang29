@@ -76,9 +76,9 @@ public class Broker {
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
         this.loadBalancerConnections = new ConcurrentHashMap<>();
-        Server.connectToLoadBalancers(loadBalancerConnections, brokerName);
+        //Server.connectToLoadBalancers(loadBalancerConnections, brokerName);
         //this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
-        this.connections.put("loadBalancer", connectionToLoadBalancer);
+        //this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,10000000000L,
                 this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 10000);
@@ -95,10 +95,19 @@ public class Broker {
         }
     }
 
+    private void connectToLoadBalancers(){
+        for(String loadBalancerName: Config.loadBalancerList.keySet()){
+            Connection connection = Server.connectToLoadBalancer(loadBalancerName, this.brokerName);
+            this.loadBalancerConnections.put(loadBalancerName, connection);
+            int loadBalancerId = Config.loadBalancerList.get(loadBalancerName).getId();
+            this.membership.markAlive(loadBalancerId);
+        }
+    }
+
     /**
      * Helper to build connections to other brokers on config
      */
-    public void connectToOtherBrokers(){
+    private void connectToOtherBrokers(){
         while(true){
             try{
                 for(int id : Config.brokerList.keySet()) {
@@ -134,11 +143,17 @@ public class Broker {
         Set<Integer> allMembers = this.membership.getAllMembers();
         logger.info("broker line 112 isElecting: " + this.isElecting);
         if(this.isElecting == false){
-            for(int brokerMemberId : allMembers){
-                logger.info("broker line 107: send hb to: " + brokerMemberId);
-                String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
-                Connection connection = this.brokerConnections.get(connectedBrokerName);
-
+            for(int memberId : allMembers){
+                logger.info("broker line 107: send hb to: " + memberId);
+                Connection connection;
+                // send hb to brokers
+                if(memberId > 0){
+                    String connectedBrokerName = Config.brokerList.get(memberId).getHostName();
+                    connection = this.brokerConnections.get(connectedBrokerName);
+                } else { // send hb to load balancers
+                    String connectedLoadBalancerName = Config.idToName.get(memberId);
+                    connection = this.loadBalancerConnections.get(connectedLoadBalancerName);
+                }
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
                 HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
                 hbScheduler.start();
@@ -166,6 +181,8 @@ public class Broker {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        connectToLoadBalancers();
         connectToOtherBrokers();
         sendHb();
         this.failureDetector.start();
