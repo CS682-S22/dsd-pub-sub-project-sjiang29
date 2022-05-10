@@ -41,8 +41,8 @@ public class Server {
      * @param senderName
      * @return connection to load balancer
      */
-    public static Connection connectToLoadBalancer(String senderName){
-        String loadBalancerName = "loadBalancer";
+    public static Connection connectToLoadBalancer(String loadBalancerName, String senderName){
+        //String loadBalancerName = "loadBalancer";
         String loadBalancerAddress = Config.hostList.get(loadBalancerName).getHostAddress();
         int loadBalancerPort = Config.hostList.get(loadBalancerName).getPort();
         Connection connection = null;
@@ -56,6 +56,13 @@ public class Server {
             e.printStackTrace();
         }
         return connection;
+    }
+
+    public static void connectToLoadBalancers(ConcurrentHashMap<String, Connection> loadBalancerConnections, String senderName){
+        for(String loadBalancerName : Config.loadBalancerList.keySet()){
+            Connection connection = connectToLoadBalancer(loadBalancerName, senderName);
+            loadBalancerConnections.put(loadBalancerName, connection);
+        }
     }
 
     /**

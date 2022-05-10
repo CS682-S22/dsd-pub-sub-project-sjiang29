@@ -22,7 +22,9 @@ public class Config {
     public static HostInfo consumer1 = new HostInfo("consumer1", "localhost",1858, 0);
     public static HostInfo consumer2 = new HostInfo("consumer2", "localhost",1859, 0);
 
-    public static HostInfo loadBalancer = new HostInfo("loadBalancer", "localhost",1860, 0);
+    public static HostInfo loadBalancer1 = new HostInfo("loadBalancer1", "localhost",1861, 0);
+    public static HostInfo loadBalancer2 = new HostInfo("loadBalancer2", "localhost",1862, 0);
+    public static HostInfo loadBalancer3 = new HostInfo("loadBalancer3", "localhost",1863, 0);
 
 
     // HashMap for looking for a host information using its name
@@ -30,7 +32,7 @@ public class Config {
     {{ put(broker0.getHostName(), broker0); put(broker1.getHostName(), broker1); put(broker2.getHostName(), broker2); put(broker3.getHostName(), broker3);
         put(broker4.getHostName(), broker4); put(broker5.getHostName(), broker5); put(producer1.getHostName(), producer1);
         put(producer2.getHostName(), producer2); put(consumer1.getHostName(), consumer1); put(consumer2.getHostName(), consumer2);
-        put(loadBalancer.getHostName(), loadBalancer);
+        put(loadBalancer1.getHostName(), loadBalancer1);  put(loadBalancer2.getHostName(), loadBalancer2);  put(loadBalancer3.getHostName(), loadBalancer3);
     }};
 
 
@@ -38,6 +40,11 @@ public class Config {
     {{ put(broker1.getId(), broker1); put(broker2.getId(), broker2); put(broker3.getId(), broker3);
         put(broker4.getId(), broker4); put(broker5.getId(), broker5);
     }};
+
+    public static final HashMap<String, HostInfo> loadBalancerList = new HashMap<String, HostInfo>()
+    {{ put(loadBalancer1.getHostName(), loadBalancer1);  put(loadBalancer2.getHostName(), loadBalancer2);  put(loadBalancer3.getHostName(), loadBalancer3);
+    }};
+
 
     public static final int leaderId = 10;
 

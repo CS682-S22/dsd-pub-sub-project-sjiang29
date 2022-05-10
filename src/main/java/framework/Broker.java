@@ -45,7 +45,8 @@ public class Broker {
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
     private ConcurrentHashMap<String, Connection> brokerConnections;
-    private Connection connectionToLoadBalancer;
+    private ConcurrentHashMap<String, Connection> loadBalancerConnections;
+    //private Connection connectionToLoadBalancer;
 
     private ConcurrentHashMap<Integer, Long> receivedHeartBeatTime;
     private Membership membership;
@@ -74,7 +75,9 @@ public class Broker {
         this.membership = new Membership();
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
-        this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
+        this.loadBalancerConnections = new ConcurrentHashMap<>();
+        Server.connectToLoadBalancers(loadBalancerConnections, brokerName);
+        //this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
         this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,10000000000L,
