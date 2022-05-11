@@ -81,7 +81,7 @@ public class Broker {
         //this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,10000000000L,
-                this.membership, this.brokerConnections, this.connectionToLoadBalancer, this.msgLists), 10000);
+                this.membership, this.brokerConnections, this.loadBalancerConnections, this.msgLists), 10000);
         this.isRunning = true;
         this.isSync = false;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
@@ -177,7 +177,7 @@ public class Broker {
     public void startBroker(){
         this.isRunning = true;
         try {
-            Thread.sleep(2000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -480,7 +480,7 @@ public class Broker {
                 dealEarliestDataVersion(earliestDV);
             } else if (type.equals("election")){
                 Broker.isElecting = true;
-                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, connectionToLoadBalancer, msgLists);
+                int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, loadBalancerConnections, msgLists);
                 if(newLeaderId != -1){
                     membership.setLeaderId(newLeaderId);
                 }

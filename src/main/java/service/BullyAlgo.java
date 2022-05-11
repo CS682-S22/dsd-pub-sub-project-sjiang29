@@ -37,11 +37,12 @@ public class BullyAlgo {
         Broker.isElecting = true;
         int newLeaderId = -1;
         boolean hasLargerId = false;
-        Set<Integer> liveMembersId = membership.getAllMembers();
+        //
+        Set<Integer> liveBrokersId = membership.getAllLiveBrokers();
         int hostBrokerId = Config.nameToId.get(hostBrokerName);
         MsgInfo.Msg electionMsg = MsgInfo.Msg.newBuilder().setType("election").setSenderName(hostBrokerName).build();
-        for(int i : liveMembersId){
-            if(i > hostBrokerId) {
+        for(int i : liveBrokersId){
+            if(i > 0 && i > hostBrokerId) {
                 hasLargerId = true;
                 String recipientBrokerName = Config.brokerList.get(i).getHostName();
                 Connection connection = brokerConnections.get(recipientBrokerName);
@@ -55,17 +56,20 @@ public class BullyAlgo {
             String dataVersion = Server.buildDataVersion(msgLists);
             MsgInfo.Msg coordinatorMsg = MsgInfo.Msg.newBuilder().setType("coordinator").setLeaderId(newLeaderId).
             setDataVersion(dataVersion).setSenderName(hostBrokerName).build();
-            for(int i : liveMembersId){
+            for(int i : liveBrokersId){
                 String recipientBrokerName = Config.brokerList.get(i).getHostName();
                 logger.info("bully algo line 39: send coordinator msg to + " + recipientBrokerName);
                 Connection connection = brokerConnections.get(recipientBrokerName);
                 Thread t = new Thread(() -> sendCoordinatorMsg(connection, coordinatorMsg));
                 t.start();
+
             }
             // send coordinator msg to first available load balancer
             logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
-            for(String loadBalancer : loadBalancerConnections.keySet()){
-                Connection connectionToLoadBalancer = loadBalancerConnections.get(loadBalancer);
+            Set<Integer> liveLoadBalancers = membership.getAllLiveLoadBalancers();
+            for(int loadBalancerId : liveLoadBalancers){
+                String loadBalancerName = Config.idToName.get(loadBalancerId);
+                Connection connectionToLoadBalancer = loadBalancerConnections.get(loadBalancerName);
                 connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
                 break;
             }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static framework.Broker.logger;
 
@@ -29,6 +30,7 @@ public class Producer {
 
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
+    private ConcurrentHashMap<String, Connection> loadBalancerConnections;
     private int msgId;
 
 
@@ -48,7 +50,8 @@ public class Producer {
         this.copyNum = copyNum;
         this.numOfSending = 0;
         this.numOfAck = 0;
-        this.loadBalancerConnection = Server.connectToLoadBalancer(this.producerName);
+        this.loadBalancerConnections = new ConcurrentHashMap<>();
+        Server.connectToLoadBalancers(loadBalancerConnections, this.producerName);
 
         try {
             Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);

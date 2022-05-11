@@ -74,7 +74,7 @@ public class LoadBalancer {
                     MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
                     String senderName = receivedMsg.getSenderName();
                     connections.put(senderName, this.connection);
-                    logger.info("load balancer line 62: senderName + " + senderName + " type " + receivedMsg.getType());
+                    //logger.info("load balancer line 62: senderName + " + senderName + " type " + receivedMsg.getType());
                     String type = receivedMsg.getType();
                     if(isBrokerReq(type, senderName)) {
                         newLeaderId = receivedMsg.getLeaderId();

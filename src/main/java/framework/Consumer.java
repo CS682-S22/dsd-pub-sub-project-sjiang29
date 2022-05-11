@@ -8,6 +8,7 @@ import utils.Config;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import static framework.Broker.logger;
@@ -23,6 +24,7 @@ public class Consumer implements Runnable {
     int leaderBrokerId;
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
+    private ConcurrentHashMap<String, Connection> loadBalancerConnections;
     private String consumerName;
     private String topic;
     private int startingPosition;
@@ -44,8 +46,8 @@ public class Consumer implements Runnable {
         this.topic = topic;
         logger.info("consumer line 43: topic: " + this.topic);
         this.startingPosition = startingPosition;
-
-        this.loadBalancerConnection = Server.connectToLoadBalancer(this.consumerName);
+        this.loadBalancerConnections = new ConcurrentHashMap<>();
+        Server.connectToLoadBalancers(loadBalancerConnections, this.consumerName);
         this.subscribedMsgQ = new LinkedBlockingQueue<>();
         try {
             Socket socket = new Socket(this.leaderBrokerAddress, this.leaderBrokerPort);

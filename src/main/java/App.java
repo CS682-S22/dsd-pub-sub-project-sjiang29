@@ -57,7 +57,7 @@ public class App {
      * @param brokerName
      */
     public static void dealBroker(String brokerName){
-        Broker broker = new Broker(brokerName);
+        Broker broker = new Broker(brokerName, "pull");
         broker.startBroker();
     }
 

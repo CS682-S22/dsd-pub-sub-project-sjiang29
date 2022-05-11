@@ -5,6 +5,7 @@ import utils.HostInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,6 +60,27 @@ public class Membership {
         return this.members.keySet();
     }
 
+    public Set<Integer> getAllLiveBrokers(){
+        Set<Integer> liveBrokers = new HashSet<>();
+        for(int i : this.members.keySet()){
+            if(i > 0) {
+                liveBrokers.add(i);
+            }
+        }
+
+        return liveBrokers;
+    }
+
+    public Set<Integer> getAllLiveLoadBalancers(){
+        Set<Integer> liveLoadBalancers = new HashSet<>();
+        for(int i : this.members.keySet()){
+            if(i < 0) {
+                liveLoadBalancers.add(i);
+            }
+        }
+
+        return liveLoadBalancers;
+    }
     /**
      * Helper to remove some live broker from members
      * @param id
@@ -83,7 +105,7 @@ public class Membership {
     public ArrayList<Integer> getFollowers(int id){
         ArrayList<Integer> followers = new ArrayList<>();
         for(int i : this.members.keySet()){
-            if(i < id && this.members.get(i)){
+            if(i > 0 && i < id && this.members.get(i)){
                 followers.add(i);
             }
         }

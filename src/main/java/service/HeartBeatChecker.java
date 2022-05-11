@@ -59,11 +59,12 @@ public class HeartBeatChecker implements Runnable {
     @Override
     public void run() {
         Long now = System.nanoTime();
-        Set<Integer> brokerIds = this.membership.getAllMembers();
+        // id include broker and load balancer id
+        Set<Integer> ids = this.membership.getAllMembers();
 
         int leaderId = this.membership.getLeaderId();
         logger.info("hb checker line 40:leaderId " + leaderId);
-        for (Integer id : brokerIds) {
+        for (Integer id : ids) {
             Long lastHeartbeatReceivedTime = this.heartBeatReceivedTimes.get(id);
             Long timeSinceLastHeartbeat = now - lastHeartbeatReceivedTime;
             if (timeSinceLastHeartbeat >= timeoutNanos) {
