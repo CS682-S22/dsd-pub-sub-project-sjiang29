@@ -80,8 +80,8 @@ public class Broker {
         //this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
         //this.connections.put("loadBalancer", connectionToLoadBalancer);
 
-        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,10000000000L,
-                this.membership, this.brokerConnections, this.loadBalancerConnections, this.msgLists), 10000);
+        this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,5000000000L,
+                this.membership, this.brokerConnections, this.loadBalancerConnections, this.msgLists), 7000);
         this.isRunning = true;
         this.isSync = false;
         this.brokerPort = Config.hostList.get(brokerName).getPort();
@@ -244,7 +244,7 @@ public class Broker {
                     String senderName = receivedMsg.getSenderName();
                     connections.put(senderName, this.connection);
                     String type = receivedMsg.getType();
-                    logger.info("broker line 223: senderName + " + senderName + "**type: " + type);
+                    //logger.info("broker line 223: senderName + " + senderName + "**type: " + type);
                     if(isConsumerReq(type, senderName)) {
                         dealConsumerReq(receivedMsg, senderName);
                     } else if(isProducerReq(type, senderName)) {

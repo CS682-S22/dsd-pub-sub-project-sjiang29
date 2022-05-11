@@ -54,26 +54,26 @@ public class HeartBeatChecker implements Runnable {
     }
 
     /**
-     * Runnable interface methos
+     * Runnable interface methods
      */
     @Override
     public void run() {
         Long now = System.nanoTime();
         // id include broker and load balancer id
         Set<Integer> ids = this.membership.getAllMembers();
-
+        this.membership.printLiveMembers();
         int leaderId = this.membership.getLeaderId();
         logger.info("hb checker line 40:leaderId " + leaderId);
         for (Integer id : ids) {
             Long lastHeartbeatReceivedTime = this.heartBeatReceivedTimes.get(id);
             Long timeSinceLastHeartbeat = now - lastHeartbeatReceivedTime;
             if (timeSinceLastHeartbeat >= timeoutNanos) {
-                logger.info("hb checker line 45: mark down: " + id);
+                logger.info("--------hb checker line 45: mark down: " + id);
                 this.membership.markDown(id);
-                this.membership.printLiveMembers();
+
                 // leader is down
                 if (id == leaderId) {
-                    logger.info("hb checker line 49: start bully" );
+                    logger.info("++++++++hb checker line 49: start bully" );
                     Broker.isElecting = true;
                     int newLeaderId = BullyAlgo.sendBullyReq(this.membership, this.hostBrokerName, this.brokerConnections,
                             this.loadBalancerConnections, this.msgLists);

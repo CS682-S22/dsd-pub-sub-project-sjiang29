@@ -36,6 +36,6 @@ public class HeartBeatSender implements Runnable{
         MsgInfo.Msg heartBeatMsg = MsgInfo.Msg.newBuilder().setType("HeartBeat")
                 .setSenderName(this.senderName).setSenderId(this.senderId).build();
         this.connection.send(heartBeatMsg.toByteArray());
-        logger.info("hb sender line 27: sending hb from " + this.senderId);
+        //logger.info("hb sender line 27: sending hb from " + this.senderId);
     }
 }
