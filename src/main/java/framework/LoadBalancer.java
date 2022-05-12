@@ -3,10 +3,13 @@ package framework;
 import com.google.protobuf.InvalidProtocolBufferException;
 import network.Connection;
 import proto.MsgInfo;
+import service.HeartBeatScheduler;
+import service.HeartBeatSender;
 import utils.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static framework.Broker.logger;
@@ -77,9 +80,7 @@ public class LoadBalancer {
                     //logger.info("load balancer line 62: senderName + " + senderName + " type " + receivedMsg.getType());
                     String type = receivedMsg.getType();
                     if(isBrokerReq(type, senderName)) {
-                        newLeaderId = receivedMsg.getLeaderId();
-                        logger.info("receive coordinator from " + senderName + " new leader " + newLeaderId);
-                        notifyAllHosts();
+                        dealBrokerReq(type, receivedMsg);
                     }
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
@@ -93,7 +94,23 @@ public class LoadBalancer {
          * @param type
          */
         private boolean isBrokerReq(String type, String senderName){
-            return type.equals("coordinator") && senderName.contains("broker");
+            boolean isBrokerReqType = type.equals("coordinator") || type.equals("greeting");
+            return isBrokerReqType && senderName.contains("broker");
+        }
+
+        private void dealBrokerReq(String type, MsgInfo.Msg receivedMsg){
+            if(type.equals("greeting")){
+                int loadBalancerId = Config.loadBalancerList.get(loadBalancerName).getId();
+                HeartBeatSender hbSender = new HeartBeatSender(this.connection, loadBalancerId, loadBalancerName);
+                HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
+                hbScheduler.start();
+            } else if(type.equals("coordinator")){
+                String senderName = receivedMsg.getSenderName();
+                newLeaderId = receivedMsg.getLeaderId();
+                logger.info("receive coordinator from " + senderName + " new leader " + newLeaderId);
+                notifyAllHosts();
+            }
+
         }
 
         /**
@@ -110,6 +127,8 @@ public class LoadBalancer {
                 }
             }
         }
+
+
     }
 
 

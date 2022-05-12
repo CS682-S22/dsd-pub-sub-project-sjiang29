@@ -101,6 +101,8 @@ public class Broker {
             this.loadBalancerConnections.put(loadBalancerName, connection);
             int loadBalancerId = Config.loadBalancerList.get(loadBalancerName).getId();
             this.membership.markAlive(loadBalancerId);
+            Thread connectionHandler = new Thread(new ConnectionHandler(connection));
+            connectionHandler.start();
         }
     }
 
@@ -140,20 +142,14 @@ public class Broker {
      * Helper to send heart beat to other brokers
      */
     public void sendHb() {
-        Set<Integer> allMembers = this.membership.getAllMembers();
+        Set<Integer> allBrokers = this.membership.getAllLiveBrokers();
         logger.info("broker line 112 isElecting: " + this.isElecting);
         if(this.isElecting == false){
-            for(int memberId : allMembers){
-                logger.info("broker line 107: send hb to: " + memberId);
-                Connection connection;
-                // send hb to brokers
-                if(memberId > 0){
-                    String connectedBrokerName = Config.brokerList.get(memberId).getHostName();
-                    connection = this.brokerConnections.get(connectedBrokerName);
-                } else { // send hb to load balancers
-                    String connectedLoadBalancerName = Config.idToName.get(memberId);
-                    connection = this.loadBalancerConnections.get(connectedLoadBalancerName);
-                }
+            for(int brokerMemberId : allBrokers){
+                logger.info("broker line 107: send hb to: " + brokerMemberId);
+                String connectedBrokerName = Config.brokerList.get(brokerMemberId).getHostName();
+                Connection connection = this.brokerConnections.get(connectedBrokerName);
+
                 HeartBeatSender hbSender = new HeartBeatSender(connection, this.brokerId, this.brokerName);
                 HeartBeatScheduler hbScheduler = new HeartBeatScheduler(hbSender, 2000);
                 hbScheduler.start();
@@ -251,6 +247,8 @@ public class Broker {
                         dealProducerReq(receivedMsg);
                     } else if(isBrokerReq(type, senderName)) {
                         dealBrokerReq(receivedMsg, this.connection);
+                    } else if(isLoadBalancerReq(type, senderName)) {
+                        dealLoadBalancerReq(receivedMsg, this.connection);
                     }
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
@@ -284,6 +282,13 @@ public class Broker {
                     type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
                     || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber");
             return isBrokerReqType && senderName.contains("broker");
+        }
+
+
+        private boolean isLoadBalancerReq(String type, String senderName){
+            boolean isLoadBalancerReqType = type.equals("HeartBeat");
+
+            return isLoadBalancerReqType && senderName.contains("loadBalancer");
         }
 
         /**
@@ -599,8 +604,16 @@ public class Broker {
             }
         }
 
-
-
+        private void dealLoadBalancerReq(MsgInfo.Msg receivedMsg, Connection connection){
+            String type = receivedMsg.getType();
+            String senderName = receivedMsg.getSenderName();
+            if(type.equals("HeartBeat")){
+                long currentTime = System.nanoTime();
+                int id = receivedMsg.getSenderId();
+                receivedHeartBeatTime.put(id, currentTime);
+                membership.markAlive(id);
+            }
+        }
 
 
     }
