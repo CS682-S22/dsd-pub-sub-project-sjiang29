@@ -65,9 +65,10 @@ public class BullyAlgo {
 
             }
             // send coordinator msg to first available load balancer
-            logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId);
+
             Set<Integer> liveLoadBalancers = membership.getAllLiveLoadBalancers();
             for(int loadBalancerId : liveLoadBalancers){
+                logger.info("bully algo line 44: send coordinator msg to load balancer from" + newLeaderId + " to " + loadBalancerId );
                 String loadBalancerName = Config.idToName.get(loadBalancerId);
                 Connection connectionToLoadBalancer = loadBalancerConnections.get(loadBalancerName);
                 connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
