@@ -50,6 +50,7 @@ public class Producer {
         this.copyNum = copyNum;
         this.numOfSending = 0;
         this.numOfAck = 0;
+        this.loadBalancerConnection = null;
         this.loadBalancerConnections = new ConcurrentHashMap<>();
         Server.connectToLoadBalancers(loadBalancerConnections, this.producerName);
 
@@ -77,7 +78,15 @@ public class Producer {
      */
     public void updateLeaderBrokerConnection(){
 
-        byte[] receivedBytes = this.loadBalancerConnection.receive();
+        byte[] receivedBytes = null;
+        for(String loadBalancerName : this.loadBalancerConnections.keySet()){
+            Connection connection = loadBalancerConnections.get(loadBalancerName);
+            receivedBytes = connection.receive();
+            if(receivedBytes != null){
+                this.loadBalancerConnection = connection;
+                break;
+            }
+        }
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 
