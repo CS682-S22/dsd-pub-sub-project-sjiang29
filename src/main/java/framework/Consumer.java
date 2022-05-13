@@ -46,6 +46,7 @@ public class Consumer implements Runnable {
         this.topic = topic;
         logger.info("consumer line 43: topic: " + this.topic);
         this.startingPosition = startingPosition;
+        this.loadBalancerConnection = null;
         this.loadBalancerConnections = new ConcurrentHashMap<>();
         Server.connectToLoadBalancers(loadBalancerConnections, this.consumerName);
         this.subscribedMsgQ = new LinkedBlockingQueue<>();
@@ -61,7 +62,15 @@ public class Consumer implements Runnable {
      * Helper to update leader connection if old leader fails and new leader if prompted
      */
     public void updateLeaderBrokerConnection(){
-        byte[] receivedBytes = this.loadBalancerConnection.receive();
+        byte[] receivedBytes = null;
+        for(String loadBalancerName : this.loadBalancerConnections.keySet()){
+            Connection connection = loadBalancerConnections.get(loadBalancerName);
+            receivedBytes = connection.receive();
+            if(receivedBytes != null){
+                this.loadBalancerConnection = connection;
+                break;
+            }
+        }
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 
