@@ -19,5 +19,7 @@ message Msg {
   int32 leaderId = 10;
   string dataVersion = 11;
   string subscriber = 12;
+  string topic1Owner = 13;
+  string topic2Owner = 14;
 
 }

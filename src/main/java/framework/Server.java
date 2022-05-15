@@ -112,27 +112,72 @@ public class Server {
      * @param dataVersions
      * @return  a string represents earliest data version
      */
-    public static String pickEarliestDataVersion(CopyOnWriteArrayList<String> dataVersions){
-        String s = dataVersions.get(0);
+    public static MsgInfo.Msg pickEarliestDataVersion(ConcurrentHashMap<String, String> dataVersions, String currentBrokerName){
+
+        String s = dataVersions.get(currentBrokerName);
         int[] countsOfS = Server.getTopicMsgCount(s);
         int count1 = countsOfS[0];
         int count2 = countsOfS[1];
+        String topic1Owner = "";
+        String topic2Owner = "";
 
-        for(String dv : dataVersions){
-            int[] nums = Server.getTopicMsgCount(dv);
+        for(String brokerName : dataVersions.keySet()){
+            int[] nums = Server.getTopicMsgCount(dataVersions.get(brokerName));
             int nums1 = nums[0];
             int nums2 = nums[1];
             if(count1 >= nums1){
                 count1 = nums1;
+                topic1Owner = brokerName;
             }
             if(count2 >= nums2){
                 count2 = nums2;
+                topic2Owner = brokerName;
             }
         }
         StringBuilder sb = new StringBuilder();
         sb.append(Config.topic1).append(":").append(count1).append(";").append(Config.topic2).append(":").append(count2);
-        return sb.toString();
+        String earliestDataVersion = sb.toString();
+        MsgInfo.Msg earliestDataVersionMsg = MsgInfo.Msg.newBuilder().setDataVersion(earliestDataVersion).setTopic1Owner(topic1Owner).
+                setTopic2Owner(topic2Owner).build();
+        return earliestDataVersionMsg;
     }
+
+    /**
+     * Method to figure out latest data version according to dataVersion list
+     * @param dataVersions
+     * @return  a string represents latest data version
+     */
+
+    public static MsgInfo.Msg pickLatestDataVersion(ConcurrentHashMap<String, String> dataVersions, String currentBrokerName){
+
+        String s = dataVersions.get(currentBrokerName);
+        int[] countsOfS = Server.getTopicMsgCount(s);
+        int count1 = countsOfS[0];
+        int count2 = countsOfS[1];
+        String topic1Owner = "";
+        String topic2Owner = "";
+
+        for(String brokerName : dataVersions.keySet()){
+            int[] nums = Server.getTopicMsgCount(dataVersions.get(brokerName));
+            int nums1 = nums[0];
+            int nums2 = nums[1];
+            if(count1 <= nums1){
+                count1 = nums1;
+                topic1Owner = brokerName;
+            }
+            if(count2 <= nums2){
+                count2 = nums2;
+                topic2Owner = brokerName;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(Config.topic1).append(":").append(count1).append(";").append(Config.topic2).append(":").append(count2);
+        String latestDataVersion = sb.toString();
+        MsgInfo.Msg latestDataVersionMsg = MsgInfo.Msg.newBuilder().setDataVersion(latestDataVersion).setTopic1Owner(topic1Owner).
+                setTopic2Owner(topic2Owner).build();
+        return latestDataVersionMsg;
+    }
+
 
 
 

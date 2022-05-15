@@ -41,7 +41,8 @@ public class Broker {
     // key is topic, value is list of consumers who subscribe this topic
     private ConcurrentHashMap<String, ArrayList<String>> subscriberList;
     // data version from current broker and its followers
-    private CopyOnWriteArrayList<String> dataVersions;
+    private ConcurrentHashMap<String, String> dataVersions;
+    //private CopyOnWriteArrayList<String> dataVersions;
     // key is the name of the other end of connection
     private ConcurrentHashMap<String, Connection> connections;
     private ConcurrentHashMap<String, Connection> brokerConnections;
@@ -68,7 +69,7 @@ public class Broker {
         isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
         this.subscriberList = new ConcurrentHashMap<>();
-        this.dataVersions = new CopyOnWriteArrayList<>();
+        this.dataVersions = new ConcurrentHashMap<>();
         this.copyStatuses = new ConcurrentHashMap<>();
         this.topicToClient = new ConcurrentHashMap<>();
         this.receivedHeartBeatTime = new ConcurrentHashMap<>();
@@ -474,12 +475,12 @@ public class Broker {
             } else if(type.equals("dataVersion")) {
                 Broker.isElecting = false;
                 String currentBrokerDv = Server.buildDataVersion(msgLists);
-                dataVersions.add(currentBrokerDv);
+                dataVersions.put(brokerName, currentBrokerDv);
                 String dataVersion = receivedMsg.getDataVersion();
-                dataVersions.add(dataVersion);
-                String earliestDV = Server.pickEarliestDataVersion(dataVersions);
-                dealEarliestDataVersion(earliestDV);
-                sendEarliestToFollowers(earliestDV);
+                dataVersions.put(senderName,dataVersion);
+                MsgInfo.Msg earliestDVMsg = Server.pickEarliestDataVersion(dataVersions, brokerName);
+                //dealEarliestDataVersion(earliestDV);
+                //sendEarliestToFollowers(earliestDV);
             } else if(type.equals("earliestDataVersion")) {
                 String earliestDV = receivedMsg.getDataVersion();
                 dealEarliestDataVersion(earliestDV);
@@ -566,6 +567,22 @@ public class Broker {
                 Connection connection = brokerConnections.get(Config.brokerList.get(follower).getHostName());
                 logger.info("broker line 327: send to follower");
                 Thread t = new Thread(() -> sendToFollower(earliestDVMsg, connection));
+                t.start();
+            }
+        }
+
+        /**
+         * Helper method to send latestDataVersion among all live brokers to all brokers
+         * @param latestDataVersion
+         */
+        private void sendLatestToFollowers(String latestDataVersion){
+            MsgInfo.Msg latestDVMsg = MsgInfo.Msg.newBuilder().setType("latestDataVersion").setDataVersion(latestDataVersion)
+                    .setSenderName(brokerName).build();
+            ArrayList<Integer> followers = membership.getFollowers(brokerId);
+            for(int follower: followers){
+                Connection connection = brokerConnections.get(Config.brokerList.get(follower).getHostName());
+                logger.info("broker line 327: send to follower");
+                Thread t = new Thread(() -> sendToFollower(latestDVMsg, connection));
                 t.start();
             }
         }

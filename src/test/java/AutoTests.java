@@ -233,12 +233,15 @@ public class AutoTests {
 
     @Test
     public void pickEarliestDataVersion(){
-        CopyOnWriteArrayList<String> l = new CopyOnWriteArrayList<>();
+        String broker1 = "broker1";
+        String broker2 = "broker2";
         String s1 = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
         String s2 = Config.topic1 + ":" + "10" + ";" + Config.topic2 + ":" + "2";
-        l.add(s1);
-        l.add(s2);
-        String res = Server.pickEarliestDataVersion(l);
+        ConcurrentHashMap<String, String> dvs = new ConcurrentHashMap<>();
+        dvs.put(broker1, s1);
+        dvs.put(broker2, s2);
+
+        String res = Server.pickEarliestDataVersion(dvs, broker1).getDataVersion();
         String predicted = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "2";
         Assertions.assertEquals(res, predicted);
 
