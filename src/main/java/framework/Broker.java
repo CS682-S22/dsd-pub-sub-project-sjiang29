@@ -281,7 +281,8 @@ public class Broker {
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
                     type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
-                    || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber");
+                    || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber")
+                    || type.equals("latestDataVersion") || type.equals("askForMsg") || type.equals("requiredMsg");
             return isBrokerReqType && senderName.contains("broker");
         }
 
@@ -460,12 +461,7 @@ public class Broker {
                 int id = receivedMsg.getSenderId();
                 receivedHeartBeatTime.put(id, currentTime);
                 membership.markAlive(id);
-                if(senderName.contains("new") && isLeader()){
-                    Thread t = new Thread(() -> syncToNewFollower());
-                    t.start();
-                }
-            } else if (type.equals("sync") && brokerName.contains("new")) {
-                deadSyncMsg(receivedMsg);
+
             } else if (type.equals("coordinator")){
                 int newLeaderId = Config.nameToId.get(senderName);
                 membership.setLeaderId(newLeaderId);
@@ -478,12 +474,22 @@ public class Broker {
                 dataVersions.put(brokerName, currentBrokerDv);
                 String dataVersion = receivedMsg.getDataVersion();
                 dataVersions.put(senderName,dataVersion);
-                MsgInfo.Msg earliestDVMsg = Server.pickEarliestDataVersion(dataVersions, brokerName);
+                MsgInfo.Msg latestDV = Server.pickLatestDataVersion(dataVersions, brokerName);
+                dealLatestDataVersion(latestDV);
+                sendLatestToFollowers(latestDV);
                 //dealEarliestDataVersion(earliestDV);
                 //sendEarliestToFollowers(earliestDV);
-            } else if(type.equals("earliestDataVersion")) {
-                String earliestDV = receivedMsg.getDataVersion();
-                dealEarliestDataVersion(earliestDV);
+            } else if(type.equals("latestDataVersion")) {
+                //String earliestDV = receivedMsg.getDataVersion();
+                dealLatestDataVersion(receivedMsg);
+            } else if(type.equals("askForMsg")) {
+                int startingPos = receivedMsg.getStartingPosition();
+                int requiredMsgCount = receivedMsg.getRequiredMsgCount();
+                String topic = receivedMsg.getTopic();
+                sendRequiredMsg(startingPos, requiredMsgCount, topic);
+
+            } else if(type.equals("requiredMsg")) {
+                saveRequiredMsg(receivedMsg);
             } else if (type.equals("election")){
                 Broker.isElecting = true;
                 int newLeaderId = BullyAlgo.sendBullyReq(membership, brokerName, brokerConnections, loadBalancerConnections, msgLists);
@@ -511,34 +517,7 @@ public class Broker {
 
         }
 
-        /**
-         * Helper method to deal new coming broker, to sync current leader's data to this new coming
-         */
-        private void syncToNewFollower(){
-            isSync = true;
-            if(isSync){
-                for(String topic : msgLists.keySet()){
-                    CopyOnWriteArrayList<MsgInfo.Msg> list = msgLists.get(topic);
-                    int msgCount = list.size();
-                    int i = 0;
-                    while(i < msgCount){
-                        MsgInfo.Msg msg = list.get(i);
-                        MsgInfo.Msg syncMsg = MsgInfo.Msg.newBuilder().setType("sync").setTopic(topic).setSenderName(brokerName).
-                                setContent(msg.getContent()).build();
-                        this.connection.send(syncMsg.toByteArray());
-                    }
-                }
-            }
-            isSync = false;
-        }
 
-        /**
-         * Helper method to deal sync msg from leader broker
-         * @param receivedMsg
-         */
-        private void deadSyncMsg(MsgInfo.Msg receivedMsg){
-            dealCopy(receivedMsg);
-        }
 
         /**
          * Helper method to deal copy msg from leader broker
@@ -573,9 +552,10 @@ public class Broker {
 
         /**
          * Helper method to send latestDataVersion among all live brokers to all brokers
-         * @param latestDataVersion
+         * @param latestDV
          */
-        private void sendLatestToFollowers(String latestDataVersion){
+        private void sendLatestToFollowers(MsgInfo.Msg latestDV){
+            String latestDataVersion = latestDV.getDataVersion();
             MsgInfo.Msg latestDVMsg = MsgInfo.Msg.newBuilder().setType("latestDataVersion").setDataVersion(latestDataVersion)
                     .setSenderName(brokerName).build();
             ArrayList<Integer> followers = membership.getFollowers(brokerId);
@@ -587,6 +567,50 @@ public class Broker {
             }
         }
 
+        private void dealLatestDataVersion(MsgInfo.Msg latestDV){
+            String latestDataVersion = latestDV.getDataVersion();
+            int[] nums = Server.getTopicMsgCount(latestDataVersion);
+            int countOfTopic1 = nums[0];
+            int countOfTopic2 = nums[1];
+            String topic1 = Config.topic1;
+            String topic2 = Config.topic2;
+            String topic1Owner = latestDV.getTopic1Owner();
+            String topic2Owner = latestDV.getTopic2Owner();
+            if(countOfTopic1 > msgLists.get(topic1).size()){
+                askForMsg(topic1Owner, msgLists.get(topic1).size(), countOfTopic1 -msgLists.get(topic1).size(), topic1 );
+            }
+            if(countOfTopic2 > msgLists.get(topic2).size()){
+                askForMsg(topic2Owner, msgLists.get(topic2).size(), countOfTopic2 -msgLists.get(topic2).size(), topic1 );
+            }
+
+        }
+
+        private void askForMsg(String targetBroker, int startingPos, int requiredCount, String topic){
+            MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("askForMsg").setTopic(topic).setStartingPosition(startingPos).setRequiredMsgCount(requiredCount)
+                    .setSenderName(brokerName).build();
+            Connection connection = brokerConnections.get(targetBroker);
+            connection.send(requestMsg.toByteArray());
+        }
+
+        private void sendRequiredMsg(int startingPos, int requiredCount, String topic){
+            CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(topic);
+            MsgInfo.Msg requiredMsg;
+            int endPoint;
+
+            endPoint = startingPos + requiredCount;
+
+            for(int i = startingPos; i < endPoint; i++){
+                requiredMsg = MsgInfo.Msg.newBuilder().setType("requiredMsg").setContent(requiredMsgList.get(i).getContent()).setTopic(topic).build();
+                this.connection.send(requiredMsg.toByteArray());
+            }
+        }
+
+        private void saveRequiredMsg(MsgInfo.Msg requiredMsg){
+            String topic = requiredMsg.getTopic();
+            CopyOnWriteArrayList<MsgInfo.Msg> l = msgLists.get(topic);
+            l.add(requiredMsg);
+            msgLists.put(topic, l);
+        }
         /**
          * Helper method to deal earliestDataVersion msg type, roll back to earliest data version accordingly
          * @param earliestDataVersion

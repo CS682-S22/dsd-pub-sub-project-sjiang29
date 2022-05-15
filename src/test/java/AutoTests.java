@@ -248,6 +248,23 @@ public class AutoTests {
 
     }
 
+    @Test
+    public void pickLatestDataVersion(){
+        String broker1 = "broker1";
+        String broker2 = "broker2";
+        String s1 = Config.topic1 + ":" + "1" + ";" + Config.topic2 + ":" + "9";
+        String s2 = Config.topic1 + ":" + "10" + ";" + Config.topic2 + ":" + "2";
+        ConcurrentHashMap<String, String> dvs = new ConcurrentHashMap<>();
+        dvs.put(broker1, s1);
+        dvs.put(broker2, s2);
+
+        String res = Server.pickLatestDataVersion(dvs, broker1).getDataVersion();
+        String topic2Owner = Server.pickLatestDataVersion(dvs, broker1).getTopic2Owner();
+        String predicted = Config.topic1 + ":" + "10" + ";" + Config.topic2 + ":" + "9";
+        Assertions.assertEquals(res, predicted);
+        Assertions.assertEquals(broker1, topic2Owner);
+    }
+
 
 
 
