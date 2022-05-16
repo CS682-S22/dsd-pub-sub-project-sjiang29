@@ -49,10 +49,14 @@ public class App {
         } else if(hostName.contains("consumer")){
             consumerRunner(hostName);
         } else if(hostName.contains("loadBalancer")){
-            dealLoadBalancer(hostName);
+            loadBalancerRunner(hostName);
         }
     }
 
+    /**
+     * Helper to run broker host
+     * @param brokerName
+     */
     public static void brokerRunner(String brokerName){
         UI.askForBrokerType();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
@@ -78,6 +82,10 @@ public class App {
         broker.startBroker();
     }
 
+    /**
+     * Helper to run producer host
+     * @param producerName
+     */
     public static void producerRunner(String producerName){
         UI.askForCopyNum();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
@@ -130,7 +138,6 @@ public class App {
                     producer.send(topic, data);
                     sendSuccessfully = producer.sendSuccessfully(topic, data);
                 }
-
             }
             //producer.close();
         }catch (FileNotFoundException e) {
@@ -143,6 +150,10 @@ public class App {
 
     }
 
+    /**
+     * Helper to run consumer host
+     * @param consumerName
+     */
     public static void consumerRunner(String consumerName){
         UI.askForStartingPosition();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
@@ -213,7 +224,11 @@ public class App {
         }
     }
 
-    public static void dealLoadBalancer(String loadBalancer){
+    /**
+     * Helper to run loadBalancer host
+     * @param loadBalancer
+     */
+    public static void loadBalancerRunner(String loadBalancer){
         LoadBalancer lb = new LoadBalancer(loadBalancer);
         lb.start();
     }
