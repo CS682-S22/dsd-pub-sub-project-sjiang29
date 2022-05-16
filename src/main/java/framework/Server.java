@@ -58,6 +58,11 @@ public class Server {
         return connection;
     }
 
+    /**
+     * Build connections between senderName and all load balancers
+     * @param senderName
+     * @param loadBalancerConnections
+     */
     public static void connectToLoadBalancers(ConcurrentHashMap<String, Connection> loadBalancerConnections, String senderName){
         for(String loadBalancerName : Config.loadBalancerList.keySet()){
             Connection connection = connectToLoadBalancer(loadBalancerName, senderName);
@@ -145,7 +150,7 @@ public class Server {
     /**
      * Method to figure out latest data version according to dataVersion list
      * @param dataVersions
-     * @return  a string represents latest data version
+     * @return  Msg containing latest data version
      */
 
     public static MsgInfo.Msg pickLatestDataVersion(ConcurrentHashMap<String, String> dataVersions, String currentBrokerName){
@@ -177,8 +182,6 @@ public class Server {
                 setTopic2Owner(topic2Owner).build();
         return latestDataVersionMsg;
     }
-
-
 
 
 }

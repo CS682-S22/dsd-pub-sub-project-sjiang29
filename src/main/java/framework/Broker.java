@@ -77,9 +77,6 @@ public class Broker {
         this.connections = new ConcurrentHashMap<>();
         this.brokerConnections = new ConcurrentHashMap<>();
         this.loadBalancerConnections = new ConcurrentHashMap<>();
-        //Server.connectToLoadBalancers(loadBalancerConnections, brokerName);
-        //this.connectionToLoadBalancer = Server.connectToLoadBalancer(this.brokerName);
-        //this.connections.put("loadBalancer", connectionToLoadBalancer);
 
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,5000000000L,
                 this.membership, this.brokerConnections, this.loadBalancerConnections, this.msgLists), 7000);
@@ -96,6 +93,9 @@ public class Broker {
         }
     }
 
+    /**
+     * Helper to build connections between current broker and all load balancers
+     */
     private void connectToLoadBalancers(){
         for(String loadBalancerName: Config.loadBalancerList.keySet()){
             Connection connection = Server.connectToLoadBalancer(loadBalancerName, this.brokerName);
@@ -280,16 +280,19 @@ public class Broker {
          */
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
-                    type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy")
+                    type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy") || type.equals("subscriber")
                     || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber")
                     || type.equals("latestDataVersion") || type.equals("askForMsg") || type.equals("requiredMsg");
             return isBrokerReqType && senderName.contains("broker");
         }
 
 
+        /**
+         * Method to check if a coming request is a load balancer request, return true if yes
+         * @return see method description
+         */
         private boolean isLoadBalancerReq(String type, String senderName){
             boolean isLoadBalancerReqType = type.equals("HeartBeat");
-
             return isLoadBalancerReqType && senderName.contains("loadBalancer");
         }
 
@@ -316,6 +319,12 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper method to deal consumer's request(pull based)
+         * @param subscribedTopic
+         * @param startingPosition
+         * @param requiredMsgCount
+         */
         private void dealPullConsumerReq(String subscribedTopic, int startingPosition, int requiredMsgCount){
             CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
             if(requiredMsgList == null){
@@ -340,6 +349,12 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper method to deal consumer's request(push based)
+         * @param subscribedTopic
+         * @param startingPosition
+         * @param senderName
+         */
         private void dealPushConsumerReq(String subscribedTopic, int startingPosition, String senderName) {
             addNewSubscriber(subscribedTopic,senderName);
             // also need to let followers add this new subscriber
@@ -358,6 +373,11 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper to add newly coming subscriber to corresponding subscriber list based on subscribed topic
+         * @param newSubscriber
+         * @param subscribedTopic
+         */
         private void addNewSubscriber(String subscribedTopic, String newSubscriber){
             ArrayList<String> subscribers = subscriberList.get(subscribedTopic);
             if(subscribers == null){
@@ -429,11 +449,21 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper to send some message to one follower
+         * @param connection
+         * @param msg
+         */
         private void sendToFollower(MsgInfo.Msg msg, Connection connection){
             connection.send(msg.toByteArray());
         }
-        private void sendToFollowers(MsgInfo.Msg receivedMsg){
 
+
+        /**
+         * Helper to send some message to all followers
+         * @param receivedMsg
+         */
+        private void sendToFollowers(MsgInfo.Msg receivedMsg){
             String topic = receivedMsg.getTopic();
             String msgContent = new String(receivedMsg.getContent().toByteArray());
             MsgInfo.Msg copiedMsg = MsgInfo.Msg.newBuilder().setTopic(topic).setType("copy")
@@ -445,7 +475,6 @@ public class Broker {
                 Thread t = new Thread(() -> sendToFollower(copiedMsg, connection));
                 t.start();
             }
-
         }
 
 
@@ -567,6 +596,11 @@ public class Broker {
             }
         }
 
+
+        /**
+         * Helper method to deal lastestDataVersion message type, if left behind, ask for msg from broker who has it
+         * @param latestDV
+         */
         private void dealLatestDataVersion(MsgInfo.Msg latestDV){
             String latestDataVersion = latestDV.getDataVersion();
             int[] nums = Server.getTopicMsgCount(latestDataVersion);
@@ -585,6 +619,13 @@ public class Broker {
 
         }
 
+        /**
+         * Helper method to ask for needed messages from target broker to catch up
+         * @param targetBroker
+         * @param requiredCount
+         * @param startingPos
+         * @param topic
+         */
         private void askForMsg(String targetBroker, int startingPos, int requiredCount, String topic){
             MsgInfo.Msg requestMsg = MsgInfo.Msg.newBuilder().setType("askForMsg").setTopic(topic).setStartingPosition(startingPos).setRequiredMsgCount(requiredCount)
                     .setSenderName(brokerName).build();
@@ -592,6 +633,13 @@ public class Broker {
             connection.send(requestMsg.toByteArray());
         }
 
+
+        /**
+         * Helper method to send required message to broker who asks for them
+         * @param requiredCount
+         * @param startingPos
+         * @param topic
+         */
         private void sendRequiredMsg(int startingPos, int requiredCount, String topic){
             CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(topic);
             MsgInfo.Msg requiredMsg;
@@ -605,6 +653,11 @@ public class Broker {
             }
         }
 
+
+        /**
+         * Helper method to save required message to corresponding list according to topic
+         * @param requiredMsg
+         */
         private void saveRequiredMsg(MsgInfo.Msg requiredMsg){
             String topic = requiredMsg.getTopic();
             CopyOnWriteArrayList<MsgInfo.Msg> l = msgLists.get(topic);
@@ -645,6 +698,11 @@ public class Broker {
             }
         }
 
+        /**
+         * Helper method to deal load balancer's request
+         * @param connection
+         * @param receivedMsg
+         */
         private void dealLoadBalancerReq(MsgInfo.Msg receivedMsg, Connection connection){
             String type = receivedMsg.getType();
             String senderName = receivedMsg.getSenderName();
@@ -655,16 +713,6 @@ public class Broker {
                 membership.markAlive(id);
             }
         }
-
-
     }
-
-
-
-
-
-
-
-
 
 }
