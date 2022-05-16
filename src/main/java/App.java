@@ -6,9 +6,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import proto.MsgInfo;
 import utils.Config;
+import utils.UI;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+
 import static framework.Broker.logger;
 
 
@@ -23,33 +26,46 @@ public class App {
      *
      */
     public static void main(String[] args){
-        if (args.length != 3){
-            System.out.println("Usage of the application is:  java -cp p2.jar App <hostName> <startingPosition> ");
+        if (args.length != 1){
+            System.out.println("Usage of the application is:  java -cp p2.jar App <hostName>");
             System.exit(1);
         }
 
         String hostName = args[0];
-        int startingPosition = Integer.parseInt(args[1]);
-        int copyNum = Integer.parseInt(args[1]);
-        String brokerType = args[2];
         logger.info("hostName: " + hostName);
-        run(hostName, startingPosition, copyNum, brokerType);
+        run(hostName);
     }
 
     /**
      * Helper to run the host based on their name
      * @param hostName
-     * @param startingPosition
+
      */
-    public static void run(String hostName, int startingPosition, int copyNum, String brokerType){
+    public static void run(String hostName){
         if(hostName.contains("broker")){
-            dealBroker(hostName, brokerType);
+            brokerRunner(hostName);
         } else if(hostName.contains("producer")){
-            dealProducer(hostName, copyNum);
+            producerRunner(hostName);
         } else if(hostName.contains("consumer")){
-            dealConsumer(hostName, startingPosition);
+            consumerRunner(hostName);
         } else if(hostName.contains("loadBalancer")){
             dealLoadBalancer(hostName);
+        }
+    }
+
+    public static void brokerRunner(String brokerName){
+        UI.askForBrokerType();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
+            String line = in.readLine();
+            if (line != null){
+                String[] parsedArgs = line.split(" ");
+                String brokerType = parsedArgs[0];
+                dealBroker(brokerName, brokerType);
+            } else {
+                UI.askForBrokerType();
+            }
+        }catch(IOException ioe){
+            System.out.println(ioe.getMessage());
         }
     }
 
@@ -60,6 +76,22 @@ public class App {
     public static void dealBroker(String brokerName, String brokerType){
         Broker broker = new Broker(brokerName, brokerType);
         broker.startBroker();
+    }
+
+    public static void producerRunner(String producerName){
+        UI.askForCopyNum();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
+            String line = in.readLine();
+            if (line != null){
+                String[] parsedArgs = line.split(" ");
+                int copyNum = Integer.parseInt(parsedArgs[0]);
+                dealProducer(producerName, copyNum);
+            } else {
+                UI.askForCopyNum();
+            }
+        }catch(IOException ioe){
+            System.out.println(ioe.getMessage());
+        }
     }
 
     /**
@@ -111,6 +143,21 @@ public class App {
 
     }
 
+    public static void consumerRunner(String consumerName){
+        UI.askForStartingPosition();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in));){
+            String line = in.readLine();
+            if (line != null){
+                String[] parsedArgs = line.split(" ");
+                int startingPos = Integer.parseInt(parsedArgs[0]);
+                dealConsumer(consumerName, startingPos);
+            } else {
+                UI.askForStartingPosition();
+            }
+        }catch(IOException ioe){
+            System.out.println(ioe.getMessage());
+        }
+    }
     /**
      * Helper to deal consumer host
      * @param consumerName
