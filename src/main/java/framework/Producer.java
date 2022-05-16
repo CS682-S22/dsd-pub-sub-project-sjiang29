@@ -189,48 +189,6 @@ public class Producer {
         return false;
     }
 
-    class ConnectionHandler implements Runnable{
 
-        private Connection connection;
-
-        /**
-         * Constructor
-         * @param connection
-         */
-        public ConnectionHandler(Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public void run() {
-            boolean isRunning = true;
-            //while(isRunning){
-                byte[] receivedBytes = this.connection.receive();
-                try {
-                    MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
-                    if(receivedMsg.getType().equals("coordinator")){
-                        int newLeaderId = receivedMsg.getLeaderId();
-                        leaderBrokerId = newLeaderId;
-                        logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
-                        leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
-                        leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
-                        leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
-                        Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
-                        leaderBrokerConnection = new Connection(socket);
-                        sendCopyNum(copyNum);
-                        isUpdating = false;
-                        //isRunning = false;
-                    }
-
-                } catch (InvalidProtocolBufferException e) {
-                    e.printStackTrace();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            //}
-        }
-    }
 
 }

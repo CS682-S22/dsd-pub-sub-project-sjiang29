@@ -23,7 +23,7 @@ public class App {
      *
      */
     public static void main(String[] args){
-        if (args.length != 2){
+        if (args.length != 3){
             System.out.println("Usage of the application is:  java -cp p2.jar App <hostName> <startingPosition> ");
             System.exit(1);
         }
@@ -31,8 +31,9 @@ public class App {
         String hostName = args[0];
         int startingPosition = Integer.parseInt(args[1]);
         int copyNum = Integer.parseInt(args[1]);
+        String brokerType = args[2];
         logger.info("hostName: " + hostName);
-        run(hostName, startingPosition, copyNum);
+        run(hostName, startingPosition, copyNum, brokerType);
     }
 
     /**
@@ -40,9 +41,9 @@ public class App {
      * @param hostName
      * @param startingPosition
      */
-    public static void run(String hostName, int startingPosition, int copyNum){
+    public static void run(String hostName, int startingPosition, int copyNum, String brokerType){
         if(hostName.contains("broker")){
-            dealBroker(hostName);
+            dealBroker(hostName, brokerType);
         } else if(hostName.contains("producer")){
             dealProducer(hostName, copyNum);
         } else if(hostName.contains("consumer")){
@@ -56,8 +57,8 @@ public class App {
      * Helper to deal broker host
      * @param brokerName
      */
-    public static void dealBroker(String brokerName){
-        Broker broker = new Broker(brokerName, "pull");
+    public static void dealBroker(String brokerName, String brokerType){
+        Broker broker = new Broker(brokerName, brokerType);
         broker.startBroker();
     }
 
