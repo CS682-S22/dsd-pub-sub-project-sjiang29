@@ -63,14 +63,19 @@ public class Consumer implements Runnable {
      */
     public void updateLeaderBrokerConnection(){
         byte[] receivedBytes = null;
+
         for(String loadBalancerName : this.loadBalancerConnections.keySet()){
             Connection connection = loadBalancerConnections.get(loadBalancerName);
             receivedBytes = connection.receive();
             if(receivedBytes != null){
                 this.loadBalancerConnection = connection;
                 break;
+            } else {
+                continue;
             }
         }
+
+
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 

@@ -72,7 +72,7 @@ public class BullyAlgo {
                 String loadBalancerName = Config.idToName.get(loadBalancerId);
                 Connection connectionToLoadBalancer = loadBalancerConnections.get(loadBalancerName);
                 connectionToLoadBalancer.send(coordinatorMsg.toByteArray());
-                break;
+                //break;
             }
 
         }

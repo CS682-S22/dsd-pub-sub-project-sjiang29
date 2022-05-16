@@ -30,8 +30,10 @@ public class Producer {
 
     private Connection leaderBrokerConnection;
     private Connection loadBalancerConnection;
+    private boolean isUpdating;
     private ConcurrentHashMap<String, Connection> loadBalancerConnections;
     private int msgId;
+
 
 
     /**
@@ -52,6 +54,7 @@ public class Producer {
         this.numOfAck = 0;
         this.loadBalancerConnection = null;
         this.loadBalancerConnections = new ConcurrentHashMap<>();
+        this.isUpdating = false;
         Server.connectToLoadBalancers(loadBalancerConnections, this.producerName);
 
         try {
@@ -80,13 +83,20 @@ public class Producer {
 
         byte[] receivedBytes = null;
         for(String loadBalancerName : this.loadBalancerConnections.keySet()){
+            logger.info("producer line 85: " );
             Connection connection = loadBalancerConnections.get(loadBalancerName);
+            logger.info("producer line 88: " );
             receivedBytes = connection.receive();
+            logger.info("producer line 89: " );
             if(receivedBytes != null){
+                logger.info("producer line 90: " );
                 this.loadBalancerConnection = connection;
                 break;
+            } else {
+                continue;
             }
         }
+
         try {
             MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
 
@@ -106,6 +116,22 @@ public class Producer {
         }
     }
 
+//    public void updateLeaderBrokerConnection(){
+//        this.isUpdating = true;
+//        //while(this.isUpdating){
+//            for(String loadBalancerName : this.loadBalancerConnections.keySet()){
+//                logger.info("producer line 85: " );
+//                Connection connection = loadBalancerConnections.get(loadBalancerName);
+//                Thread connectionHandler = new Thread(new Producer.ConnectionHandler(connection));
+//                connectionHandler.start();
+//
+//            }
+//        //}
+//
+//
+//
+//    }
+
 
 
     /**
@@ -120,7 +146,9 @@ public class Producer {
            boolean sendingRes = this.leaderBrokerConnection.send(sentMsg.toByteArray());
            if(sendingRes == false){
                this.msgId--;
+               logger.info("******producer line 153: failing " );
                updateLeaderBrokerConnection();
+               logger.info("******producer line 153: keep sending " );
                this.leaderBrokerConnection.send(sentMsg.toByteArray());
            } else {
                this.numOfSending++;
@@ -159,6 +187,50 @@ public class Producer {
             e.printStackTrace();
         }
         return false;
+    }
+
+    class ConnectionHandler implements Runnable{
+
+        private Connection connection;
+
+        /**
+         * Constructor
+         * @param connection
+         */
+        public ConnectionHandler(Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void run() {
+            boolean isRunning = true;
+            //while(isRunning){
+                byte[] receivedBytes = this.connection.receive();
+                try {
+                    MsgInfo.Msg receivedMsg = MsgInfo.Msg.parseFrom(receivedBytes);
+                    if(receivedMsg.getType().equals("coordinator")){
+                        int newLeaderId = receivedMsg.getLeaderId();
+                        leaderBrokerId = newLeaderId;
+                        logger.info("producer line 70: new leader is promoted, new leader: " + newLeaderId);
+                        leaderBrokerName = Config.brokerList.get(newLeaderId).getHostName();
+                        leaderBrokerAddress = Config.brokerList.get(newLeaderId).getHostAddress();
+                        leaderBrokerPort = Config.brokerList.get(newLeaderId).getPort();
+                        Socket socket = new Socket(leaderBrokerAddress, leaderBrokerPort);
+                        leaderBrokerConnection = new Connection(socket);
+                        sendCopyNum(copyNum);
+                        isUpdating = false;
+                        //isRunning = false;
+                    }
+
+                } catch (InvalidProtocolBufferException e) {
+                    e.printStackTrace();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            //}
+        }
     }
 
 }
