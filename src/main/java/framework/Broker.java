@@ -35,7 +35,7 @@ public class Broker {
     private int brokerPort;
 
     private volatile boolean isRunning;
-    private volatile boolean isSync;
+    private int startingPos;
     // key is topic, value is msg list of corresponding topic
     private ConcurrentHashMap<String, CopyOnWriteArrayList<MsgInfo.Msg>> msgLists;
     // key is topic, value is list of consumers who subscribe this topic
@@ -65,6 +65,7 @@ public class Broker {
     public Broker(String brokerName, String brokerType) {
         this.brokerName = brokerName;
         this.brokerType = brokerType;
+        this.startingPos = 0;
         this.brokerId = Config.nameToId.get(this.brokerName);
         isElecting = false;
         this.msgLists = new ConcurrentHashMap<>();
@@ -81,7 +82,7 @@ public class Broker {
         this.failureDetector = new HeartBeatScheduler(new HeartBeatChecker(this.brokerName, this.receivedHeartBeatTime,5000000000L,
                 this.membership, this.brokerConnections, this.loadBalancerConnections, this.msgLists), 7000);
         this.isRunning = true;
-        this.isSync = false;
+
         this.brokerPort = Config.hostList.get(brokerName).getPort();
         try {
             //starting broker server
@@ -281,7 +282,7 @@ public class Broker {
         private boolean isBrokerReq(String type, String senderName){
             boolean isBrokerReqType = type.equals("HeartBeat") || type.equals("election") || type.equals("coordinator") ||
                     type.equals("dataVersion") || type.equals("copy") || type.equals("successfulCopy") || type.equals("subscriber")
-                    || type.equals("earliestDataVersion") || type.equals("sync") || type.equals("subscriber")
+                    || type.equals("earliestDataVersion") || type.equals("sync")
                     || type.equals("latestDataVersion") || type.equals("askForMsg") || type.equals("requiredMsg");
             return isBrokerReqType && senderName.contains("broker");
         }
@@ -304,6 +305,7 @@ public class Broker {
             String subscribedTopic = receivedMsg.getTopic();
             int startingPosition = receivedMsg.getStartingPosition();
             int requiredMsgCount = receivedMsg.getRequiredMsgCount();
+            startingPos = startingPosition;
             logger.info("broker line 133: subscribedTopic: " + subscribedTopic);
 
             if(isElecting == true) {
@@ -362,15 +364,6 @@ public class Broker {
                     .setSubscriber(senderName).setSenderName(brokerName).build();
             sendToFollowers(subscriber);
 
-            CopyOnWriteArrayList<MsgInfo.Msg> requiredMsgList = msgLists.get(subscribedTopic);
-            if(requiredMsgList != null) {
-                MsgInfo.Msg requiredMsg;
-                for(int i = startingPosition; i < requiredMsgList.size(); i++){
-                    requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(requiredMsgList.get(i).getContent()).build();
-                    logger.info("broker 142, response msg : " + new String(requiredMsg.getContent().toByteArray()));
-                    this.connection.send(requiredMsg.toByteArray());
-                }
-            }
         }
 
         /**
@@ -411,19 +404,7 @@ public class Broker {
                     }
                     messages.add(receivedMsg);
                     msgLists.put(publishedTopic, messages);
-                    // if is push based, send new coming msg to subscribers instantly
-                    if(brokerType.equals("push")){
-                        ArrayList<String> subscribers = subscriberList.get(publishedTopic);
-                        if(subscribers != null){
-                            for(String subscriber : subscribers){
-                                logger.info("broker line 164: subscriber " + subscriber);
-                                Connection connection = connections.get(subscriber);
-                                MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
-                                logger.info("broker 175, response msg : " + new String(requiredMsg.getContent().toByteArray()));
-                                connection.send(requiredMsg.toByteArray());
-                            }
-                        }
-                    }
+
 
                     logger.info("broker line 306: is leader? + " + isLeader());
                     if(isLeader()){
@@ -438,6 +419,20 @@ public class Broker {
                             MsgInfo.Msg ackMsg = MsgInfo.Msg.newBuilder().setType("acknowledge").setSenderName(brokerName).build();
                             this.connection.send(ackMsg.toByteArray());
                             copyStatuses.get(producerName).setNumOfSuccessCopy(0);
+
+                            // if is push based, send new coming msg to subscribers instantly
+                            if(brokerType.equals("push") && messages.size() >= startingPos){
+                                ArrayList<String> subscribers = subscriberList.get(publishedTopic);
+                                if(subscribers != null){
+                                    for(String subscriber : subscribers){
+                                        logger.info("broker line 164: subscriber " + subscriber);
+                                        Connection connection = connections.get(subscriber);
+                                        MsgInfo.Msg requiredMsg = MsgInfo.Msg.newBuilder().setType("result").setContent(receivedMsg.getContent()).build();
+                                        logger.info("broker 175, response msg : " + new String(requiredMsg.getContent().toByteArray()));
+                                        connection.send(requiredMsg.toByteArray());
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {

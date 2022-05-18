@@ -116,23 +116,6 @@ public class Producer {
         }
     }
 
-//    public void updateLeaderBrokerConnection(){
-//        this.isUpdating = true;
-//        //while(this.isUpdating){
-//            for(String loadBalancerName : this.loadBalancerConnections.keySet()){
-//                logger.info("producer line 85: " );
-//                Connection connection = loadBalancerConnections.get(loadBalancerName);
-//                Thread connectionHandler = new Thread(new Producer.ConnectionHandler(connection));
-//                connectionHandler.start();
-//
-//            }
-//        //}
-//
-//
-//
-//    }
-
-
 
     /**
      * Method to send message of some topic to a broker
